@@ -184,7 +184,7 @@ options {
 		}
 	}
 	
-	protected void _addGeneratesRule(String event, ArrayList<String> event_variables, ArrayList<FluentCondition> result_fluents, ArrayList<FluentCondition> condition_fluents) {
+	protected void _addGeneratesRule(String event, ArrayList<String> event_variables, ArrayList<EventWithVariables> result_events, ArrayList<FluentCondition> condition_fluents) {
 		String[] event_vars_array = new String[] {};
 		
 		if (event_variables != null) {
@@ -195,32 +195,33 @@ options {
 			Generates g = new Generates(_getEvent(event), event_vars_array);
 		
 		
-			log("generates: " + event);
-			log(event_variables);
+			log("Adding a generation rule for : " + event);
 			
 			// Results
-			Iterator<FluentCondition> iter = result_fluents.iterator();
-			while (iter.hasNext()) {
-				FluentCondition cond = iter.next();
-				
-				log("Generates result fluent name: " + cond.fluent);
-				
-				if (cond.args != null) {
-					g.result(_getFluent(cond.fluent), cond.args);
-				} else {
-					g.result(_getFluent(cond.fluent));
+			if (result_events != null) {
+				Iterator<EventWithVariables> iter = result_events.iterator();
+				while (iter.hasNext()) {
+					EventWithVariables e_v = iter.next();
+					
+					log("Result: " + e_v.name);
+					
+					g.result(_getEvent(e_v.name), e_v.args);
 				}
 			}
 			
 			// Conditions
-			iter = condition_fluents.iterator();
-			while (iter.hasNext()) {
-				FluentCondition cond = iter.next();
-				
-				if (cond.sign) {
-					g.condition(_getFluent(cond.fluent), cond.args);
-				} else {
-					g.condition(false, _getFluent(cond.fluent), cond.args);
+			if (condition_fluents != null) {
+				Iterator<FluentCondition> iter2 = condition_fluents.iterator();
+				while (iter2.hasNext()) {
+					FluentCondition cond = iter2.next();
+					
+					log("Condition: +/-?" + cond.fluent);
+					
+					if (cond.sign) {
+						g.condition(_getFluent(cond.fluent), cond.args);
+					} else {
+						g.condition(false, _getFluent(cond.fluent), cond.args);
+					}
 				}
 			}
 			
@@ -271,6 +272,19 @@ options {
 				this.args = args.toArray(new String[] {});
 			} else {
 				this.args = null;
+			}
+		}
+	}
+	
+	private class EventWithVariables {
+		public String name;
+		public String[] args;
+		
+		public EventWithVariables(String name, ArrayList<String> variables) {
+			this.name = name;
+			
+			if (variables != null) {
+				this.args = variables.toArray(new String[] {});
 			}
 		}
 	}
@@ -364,7 +378,17 @@ fluent_name
 /* GENERATES */
 
 generates_rule
-	:	event_varient KEY_GENERATES results=fluents_with_variables ( KEY_IF conditions=fluents_with_variables_with_negation )? END 	{ _addGeneratesRule($event_varient.name, $event_varient.args, $results.fluents, $conditions.fluents); }
+	:	event_varient KEY_GENERATES results=events_with_variables ( KEY_IF conditions=fluents_with_variables_with_negation )? END 	{ _addGeneratesRule($event_varient.name, $event_varient.args, $results.events, $conditions.fluents); }
+	;
+	
+events_with_variables returns [ArrayList<EventWithVariables> events]
+	scope { ArrayList<EventWithVariables> list; }
+	@init { $events_with_variables::list = new ArrayList<EventWithVariables>(); }
+	:	event_with_variables ( ',' event_with_variables )*	{ $events = $events_with_variables::list; }
+	;
+	
+event_with_variables
+	:	event_varient	{ $events_with_variables::list.add(new EventWithVariables($event_varient.name, $event_varient.args)); }
 	;
 
 fluents_with_variables returns [ArrayList<FluentCondition> fluents]
