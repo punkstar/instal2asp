@@ -463,11 +463,11 @@ consequence_rule
 	:	( initiates_rule | terminates_rule ) END;
 	
 initiates_rule
-	:	event_name variable_arguments? KEY_INITIATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: initiates_rule"); }
+	:	event_varient KEY_INITIATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: initiates_rule"); }
 	;
 	
 terminates_rule
-	:	event_name variable_arguments? KEY_TERMINATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: terminates_rule"); }
+	:	event_varient KEY_TERMINATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: terminates_rule"); }
 	;
 	
 /* INITIALLY */
