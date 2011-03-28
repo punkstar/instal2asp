@@ -183,7 +183,7 @@ options {
 			return;
 		}
 	}
-	
+
 	protected void _addGeneratesRule(String event, ArrayList<String> event_variables, ArrayList<EventWithVariables> result_events, ArrayList<FluentCondition> condition_fluents) {
 		String[] event_vars_array = new String[] {};
 		
@@ -193,42 +193,77 @@ options {
 	
 		if (_getEvent(event) != null) {
 			Generates g = new Generates(_getEvent(event), event_vars_array);
-		
-		
-			log("Adding a generation rule for : " + event);
 			
-			// Results
-			if (result_events != null) {
-				Iterator<EventWithVariables> iter = result_events.iterator();
-				while (iter.hasNext()) {
-					EventWithVariables e_v = iter.next();
-					
-					log("Result: " + e_v.name);
-					
-					g.result(_getEvent(e_v.name), e_v.args);
-				}
-			}
-			
-			// Conditions
-			if (condition_fluents != null) {
-				Iterator<FluentCondition> iter2 = condition_fluents.iterator();
-				while (iter2.hasNext()) {
-					FluentCondition cond = iter2.next();
-					
-					log("Condition: +/-?" + cond.fluent);
-					
-					if (cond.sign) {
-						g.condition(_getFluent(cond.fluent), cond.args);
-					} else {
-						g.condition(false, _getFluent(cond.fluent), cond.args);
-					}
-				}
-			}
+			g = (Generates) _addRuleConditions(g,condition_fluents);
+			g = (Generates) _addRuleResultEvents(g,result_events);
 			
 			i.generates(g);
-		} else {
-			log("Unable to write generates rule, event doesn't exist");
 		}
+	}
+	
+	protected void _addInitiates(String event, ArrayList<String> event_variables, ArrayList<FluentCondition> result_fluents, ArrayList<FluentCondition> condition_fluents) {
+		String[] event_vars_array = new String[] {};
+		
+		if (event_variables != null) {
+			event_vars_array = event_variables.toArray(new String[] {});
+		}
+	
+		if (_getEvent(event) != null) {
+			Initiates in = new Initiates(_getEvent(event), event_vars_array);
+			
+			in = (Initiates) _addRuleConditions(in, condition_fluents);
+			in = (Initiates) _addRuleResultFluents(in, result_fluents);
+			
+			i.initiates(in);
+		}
+	}
+	
+	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) {
+		// Conditions
+		if (condition_fluents != null) {
+			Iterator<FluentCondition> iter2 = condition_fluents.iterator();
+			while (iter2.hasNext()) {
+				FluentCondition cond = iter2.next();
+				
+				log("Condition: +/-?" + cond.fluent);
+				
+				if (cond.sign) {
+					r.condition(_getFluent(cond.fluent), cond.args);
+				} else {
+					r.condition(false, _getFluent(cond.fluent), cond.args);
+				}
+			}
+		}
+		
+		return r;
+	}
+	
+	protected Rule _addRuleResultFluents(Rule r, ArrayList<FluentCondition> result_fluents) {
+		// Results
+		if (result_fluents != null) {
+			Iterator<FluentCondition> iter = result_fluents.iterator();
+			while (iter.hasNext()) {
+				FluentCondition f_v = iter.next();
+				
+				r.result(_getFluent(f_v.fluent), f_v.args);
+			}
+		}
+		
+		return r;
+	}
+	
+	protected Rule _addRuleResultEvents(Rule r, ArrayList<EventWithVariables> result_events) {
+		// Results
+		if (result_events != null) {
+			Iterator<EventWithVariables> iter = result_events.iterator();
+			while (iter.hasNext()) {
+				EventWithVariables e_v = iter.next();
+				
+				r.result(_getEvent(e_v.name), e_v.args);
+			}
+		}
+		
+		return r;
 	}
 	
 	// Utility
