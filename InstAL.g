@@ -38,22 +38,17 @@ options {
 	}
 	
 	private static void log(ArrayList<String> list) {
+		log(list.toArray(new String[] {}));
+	}
+	
+	private static void log(String[] list) {
 		log("list start");
-		
-		if (list != null) {
-			for (int i = 0; i < list.size(); i++) {
-				log("item: " + list.get(i));
-			}
-		} else {
-			log("list was empty");
+		for (int i = 0; i < list.length; i++) {
+			log("item: " + list[i]);
 		}
 		log("list end");
 	}
-	
-	private class Event {
-	
-	}
-	
+
 	private void outputASP() {
 		AnsProlog asp = new AnsProlog(this.i, new Domain());
 		asp.generate();
@@ -201,20 +196,26 @@ options {
 		}
 	}
 	
-	protected void _addInitiates(String event, ArrayList<String> event_variables, ArrayList<FluentCondition> result_fluents, ArrayList<FluentCondition> condition_fluents) {
+	protected void _addInitiatesRule(String event, ArrayList<String> event_variables, ArrayList<FluentCondition> result_fluents, ArrayList<FluentCondition> condition_fluents) {
 		String[] event_vars_array = new String[] {};
 		
 		if (event_variables != null) {
 			event_vars_array = event_variables.toArray(new String[] {});
 		}
+		
+		log("Initiates event: " + event);
 	
 		if (_getEvent(event) != null) {
 			Initiates in = new Initiates(_getEvent(event), event_vars_array);
 			
-			in = (Initiates) _addRuleConditions(in, condition_fluents);
-			in = (Initiates) _addRuleResultFluents(in, result_fluents);
-			
-			i.initiates(in);
+			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
+				in = (Initiates) _addRuleConditions(in, condition_fluents);
+				in = (Initiates) _addRuleResultFluents(in, result_fluents);
+				
+				i.initiates(in);
+			} else {
+				log("Ignoring inititates because there are fluents that don't exist");
+			}
 		}
 	}
 	
@@ -245,7 +246,13 @@ options {
 			while (iter.hasNext()) {
 				FluentCondition f_v = iter.next();
 				
-				r.result(_getFluent(f_v.fluent), f_v.args);
+				log("Fluent Result: " + f_v.fluent);
+				
+				if (f_v.args == null) {
+					r.result(_getFluent(f_v.fluent));
+				} else {
+					r.result(_getFluent(f_v.fluent), f_v.args);
+				}
 			}
 		}
 		
@@ -259,7 +266,13 @@ options {
 			while (iter.hasNext()) {
 				EventWithVariables e_v = iter.next();
 				
-				r.result(_getEvent(e_v.name), e_v.args);
+				log("Event Result: " + e_v.name);
+				
+				if (e_v.args == null) {
+					r.result(_getEvent(e_v.name));
+				} else {
+					r.result(_getEvent(e_v.name), e_v.args);
+				}
 			}
 		}
 		
@@ -294,6 +307,21 @@ options {
 		}
 	}
 	
+	protected boolean _checkFluentsExist(ArrayList<FluentCondition> fluents) {
+		if (fluents != null) {
+			Iterator<FluentCondition> iter = fluents.iterator();
+			while(iter.hasNext()) {
+				FluentCondition f = iter.next();
+				
+				if (_getFluent(f.fluent) == null) {
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
 	private class FluentCondition {
 		public boolean sign;
 		public String fluent;
@@ -320,6 +348,8 @@ options {
 			
 			if (variables != null) {
 				this.args = variables.toArray(new String[] {});
+			} else {
+				this.args = null;
 			}
 		}
 	}
@@ -433,7 +463,7 @@ fluents_with_variables returns [ArrayList<FluentCondition> fluents]
 	;
 	
 fluent_with_variables
-	:	fluent_varient	{ $fluents_with_variables::list.add(new FluentCondition(false, $fluent_varient.text, $fluent_varient.args)); }
+	:	fluent_varient	{ $fluents_with_variables::list.add(new FluentCondition(false, $fluent_varient.name, $fluent_varient.args)); }
 	;
 
 fluents_with_variables_with_negation returns [ArrayList<FluentCondition> fluents]
@@ -453,9 +483,9 @@ event_varient returns [String name, ArrayList<String> args]
 	;
 	
 fluent_varient returns [String name, ArrayList<String> args]
-	:	( fluent_name variable_arguments? )			{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	| 	( 'pow(' fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	:	( 'pow(' fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
 	| 	( 'perm(' fluent_name variable_arguments? RPAR )	{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	|	( fluent_name variable_arguments? )			{ $name = $fluent_name.text; $args = $variable_arguments.args; }
 	;
 
 /* CONSEQUENCE RULES */
@@ -463,11 +493,11 @@ consequence_rule
 	:	( initiates_rule | terminates_rule ) END;
 	
 initiates_rule
-	:	event_varient KEY_INITIATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: initiates_rule"); }
+	:	event_varient KEY_INITIATES results=fluents_with_variables ( KEY_IF conditions=fluents_with_variables )?	{ _addInitiatesRule($event_varient.name, $event_varient.args, $results.fluents, $conditions.fluents); }
 	;
 	
 terminates_rule
-	:	event_varient KEY_TERMINATES fluents_with_variables ( KEY_IF fluents_with_variables )?	{ log("TODO: terminates_rule"); }
+	:	event_varient KEY_TERMINATES results=fluents_with_variables ( KEY_IF conditions=fluents_with_variables )?	{ log("TODO: terminates_rule"); }
 	;
 	
 /* INITIALLY */
