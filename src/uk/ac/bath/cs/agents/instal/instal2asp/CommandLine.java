@@ -85,11 +85,18 @@ public class CommandLine {
             InstALParser g = new InstALParser(tokens, null);
             
             g.instal_specification();
-        } catch (RecognitionException e) {
-            e.printStackTrace();
+        } catch (RecognitionException e_r) {
+            this._exception("RecognitionException: " + e_r.getMessage());
+        } catch (IllegalArgumentException e_i) {
+            this._exception("NickException: " + e_i.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            this._exception("GeneralException: " + e.getMessage());
         }
+    }
+    
+    protected void _exception(String message) {
+        this._log(String.format("An exception occurred: %s", message), true);
+        System.exit(2);
     }
     
     protected void _exit(String message) {
