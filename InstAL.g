@@ -397,7 +397,8 @@ institution_name
 constituent_decl
 	:	type_decl
 	| 	event_decl
-	| 	fluent_decl		
+	| 	fluent_decl
+	|	obligation_decl	
 	| 	generates_rule
 	| 	consequence_rule
 	;
@@ -453,7 +454,7 @@ fluent_decl
 	;
 	
 noninertial_fluent_decl returns [String type, String name, ArrayList<String> args]
-	:	'noninertial' standard_fluent_decl	{ $type = "noninertial"; $name = $standard_fluent_decl.name; $args = $standard_fluent_decl.args; }
+	:	KEY_NONINERTIAL standard_fluent_decl	{ $type = "noninertial"; $name = $standard_fluent_decl.name; $args = $standard_fluent_decl.args; }
 	;
 	
 standard_fluent_decl returns [String type, String name, ArrayList<String> args]
@@ -506,8 +507,8 @@ event_varient returns [String name, ArrayList<String> args]
 	;
 	
 fluent_varient returns [String name, ArrayList<String> args]
-	:	( 'pow(' fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	| 	( 'perm(' fluent_name variable_arguments? RPAR )	{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	:	( KEY_POW LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )	{ $name = $fluent_name.text; $args = $variable_arguments.args; }
 	|	( fluent_name variable_arguments? )			{ $name = $fluent_name.text; $args = $variable_arguments.args; }
 	;
 
@@ -526,6 +527,11 @@ terminates_rule
 /* INITIALLY */
 initially_decl
 	:	KEY_INITIALLY fluents_with_variables END	{ log("TODO: initially_decl"); }
+	;
+	
+/* OBLIGATIONS */
+obligation_decl
+	:	KEY_OBLIGATION LPAR event_varient ',' event_varient ',' event_varient RPAR END	{ log("TODO: Obligations"); }
 	;
 	
 /* UTILITY */
@@ -567,7 +573,7 @@ operation
 	:	LT | GT | EQ | NE;
 
 LINE_COMMENT
-	:	'%' ( ~('\r'|'\n')* ) '\r'? '\n' {skip();}
+	:	'%' ( ~('\r'|'\n')* ) '\r'? '\n' { skip(); }
 	;
 	
 /**  KEYWORDS **/
@@ -576,12 +582,16 @@ KEY_TYPE	:	'type';
 KEY_EVENT	:	'event';
 KEY_WITH	:	'with';
 KEY_FLUENT	:	'fluent';
+KEY_GENERATES	:	'generates';
 KEY_INITIATES	:	'initiates';
 KEY_TERMINATES	:	'terminates';
-KEY_GENERATES	:	'generates';
 KEY_IF		:	'if';
 KEY_INITIALLY	:	'initially';
-KEY_NOT	:	'not';
+KEY_NOT		:	'not';
+KEY_OBLIGATION	:	'obl';
+KEY_PERM	:	'perm';
+KEY_POW		:	'pow';
+KEY_NONINERTIAL :	'noninertial';
 
 LPAR	:	'(';
 RPAR	:	')';
