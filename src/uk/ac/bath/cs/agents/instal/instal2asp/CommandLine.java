@@ -1,4 +1,4 @@
-package uk.ac.bath.cs.agents.instal2asp;
+package uk.ac.bath.cs.agents.instal.instal2asp;
 
 import java.util.Iterator;
 import java.util.ArrayList;

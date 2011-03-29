@@ -1,4 +1,4 @@
-FOLDER=src/uk/ac/bath/cs/agents/instal2asp
+FOLDER=src/uk/ac/bath/cs/agents/instal/instal2asp
 MAIN_CLASS=CommandLine
 
 ${FOLDER}/${MAIN_CLASS}.class: ${FOLDER}/${MAIN_CLASS}.java
