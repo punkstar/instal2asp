@@ -1,6 +1,7 @@
 FOLDER=src/uk/ac/bath/cs/agents/instal/instal2asp
 MAIN_CLASS=CommandLine
 
+# Who needs Java-specific ant/maven when you've got good ol' Make :D
 ${FOLDER}/${MAIN_CLASS}.class: ${FOLDER}/${MAIN_CLASS}.java
 	mkdir -p classes/uk/ac/bath/cs/agents/instal/parser/
 	java -cp lib/antlr-3.3-complete.jar org.antlr.Tool InstAL.g -o src/uk/ac/bath/cs/agents/instal/parser
