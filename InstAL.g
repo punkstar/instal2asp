@@ -218,6 +218,29 @@ options {
 			}
 		}
 	}
+
+	protected void _addTerminatesRule(String event, ArrayList<String> event_variables, ArrayList<FluentCondition> result_fluents, ArrayList<FluentCondition> condition_fluents) {
+		String[] event_vars_array = new String[] {};
+		
+		if (event_variables != null) {
+			event_vars_array = event_variables.toArray(new String[] {});
+		}
+		
+		log("Terminates event: " + event);
+	
+		if (_getEvent(event) != null) {
+			Terminates t = new Terminates(_getEvent(event), event_vars_array);
+			
+			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
+				t = (Terminates) _addRuleConditions(t, condition_fluents);
+				t = (Terminates) _addRuleResultFluents(t, result_fluents);
+				
+				i.terminates(t);
+			} else {
+				log("Ignoring terminates because there are fluents that don't exist");
+			}
+		}
+	}
 	
 	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) {
 		// Conditions
@@ -497,7 +520,7 @@ initiates_rule
 	;
 	
 terminates_rule
-	:	event_varient KEY_TERMINATES results=fluents_with_variables ( KEY_IF conditions=fluents_with_variables )?	{ log("TODO: terminates_rule"); }
+	:	event_varient KEY_TERMINATES results=fluents_with_variables ( KEY_IF conditions=fluents_with_variables )?	{ _addTerminatesRule($event_varient.name, $event_varient.args, $results.fluents, $conditions.fluents); }
 	;
 	
 /* INITIALLY */
