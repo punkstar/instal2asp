@@ -1,13 +1,17 @@
 package uk.ac.bath.cs.agents.instal.instal2asp;
 
+import java.io.*;
+
 import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.File;
-
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
+
+import org.antlr.runtime.*;
+
+import uk.ac.bath.cs.agents.instal.parser.*;
 
 public class CommandLine {
     
@@ -40,7 +44,11 @@ public class CommandLine {
         this._validateArguments(); // Passing control to this.  Could exit out.
         
         if (this._filesExist(this._files)) {
-
+            Iterator<String> iter = this._files.iterator();
+            while (iter.hasNext()) {
+                String file = iter.next();
+                this._parseFile(file);
+            }
         } else {
             this._exit("Can't read some (or all) of the files specified -- they might not exist");
         }
@@ -64,6 +72,24 @@ public class CommandLine {
         }
         
         return true;
+    }
+    
+    protected void _parseFile(String file) {
+        try {
+            
+            this._log("Parsing file: " + file);
+            
+            CharStream cs = new ANTLRFileStream(file, "UTF8");
+            InstALLexer lex = new InstALLexer(cs);
+            CommonTokenStream tokens = new CommonTokenStream(lex);
+            InstALParser g = new InstALParser(tokens, null);
+            
+            g.instal_specification();
+        } catch (RecognitionException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
     protected void _exit(String message) {
