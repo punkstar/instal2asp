@@ -138,8 +138,6 @@ options {
 			emitErrorMessage("Fluent '" + name + "' already defined");
 			return;
 		}
-		
-		log("Adding fluent '" + name + "'");
 	
 		if (type.equals("noninertial")) {
 			NoninertialFluent f = new NoninertialFluent(name);
@@ -225,8 +223,6 @@ options {
 		if (event_variables != null) {
 			event_vars_array = event_variables.toArray(new String[] {});
 		}
-		
-		log("Terminates event: " + event);
 	
 		if (_getEvent(event) != null) {
 			Terminates t = new Terminates(_getEvent(event), event_vars_array);
@@ -377,6 +373,16 @@ options {
 		}
 	}
 	
+	@Override
+  	public void reportError(RecognitionException e) {
+  		try {
+  			throw e;
+  		} catch (NoViableAltException e1) {
+  		
+  		} catch (Exception e2) {
+  			throw new IllegalArgumentException(e);
+  		}
+  	}
 } // @members
 
 instal_specification
@@ -388,7 +394,7 @@ instal_specification
 	;
 		
 institution_decl returns [String name]
-	:	KEY_INST inst_name=institution_name END { $name = $inst_name.text; }
+	:	KEY_INST institution_name END { $name = $institution_name.text; }
 	;
 	
 institution_name
@@ -502,14 +508,14 @@ fluent_with_variables_with_negation
 	;
 	
 event_varient returns [String name, ArrayList<String> args]
-	:	( 'viol' LPAR event_name  variable_arguments? RPAR )	{ $name = "viol_" + $event_name.text; $args = $variable_arguments.args; }
+	:	( 'viol' LPAR event_name  variable_arguments? RPAR )	{ $name = $event_name.text; $args = $variable_arguments.args; }
 	| 	( event_name  variable_arguments? )			{ $name = $event_name.text; $args = $variable_arguments.args; }
 	;
 	
-fluent_varient returns [String name, ArrayList<String> args]
+fluent_varient returns [String type, String name, ArrayList<String> args]
 	:	( KEY_POW LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )	{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	|	( fluent_name variable_arguments? )			{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+	|	( fluent_name variable_arguments? )				{ $name = $fluent_name.text; $args = $variable_arguments.args; }
 	;
 
 /* CONSEQUENCE RULES */
@@ -526,7 +532,7 @@ terminates_rule
 	
 /* INITIALLY */
 initially_decl
-	:	KEY_INITIALLY fluents_with_variables END	{ log("TODO: initially_decl"); }
+	:	KEY_INITIALLY fluents_with_variables END	{ log("TODO: initially_decl: " + $fluents_with_variables.text); }
 	;
 	
 /* OBLIGATIONS */
@@ -553,7 +559,7 @@ variable_type_arguments returns [ArrayList<String> args]
 	
 variable_type_argument
 	:	variable_name ':' type_name	{ $variable_type_arguments::list.add($variable_name.text); $variable_type_arguments::map.put($variable_name.text, $type_name.text); }
-	;
+		;
 	
 variable_arguments returns [ArrayList<String> args]
 	scope { ArrayList<String> list; }
@@ -577,7 +583,7 @@ LINE_COMMENT
 	;
 	
 /**  KEYWORDS **/
-KEY_INST	:	'inst';
+KEY_INST	:	( 'institution' | 'inst');
 KEY_TYPE	:	'type';
 KEY_EVENT	:	'event';
 KEY_WITH	:	'with';
