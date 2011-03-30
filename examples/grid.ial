@@ -1,0 +1,107 @@
+institution grid;
+
+type Handset;
+type Chunk;
+type Time; 
+type Channel;
+
+% exogenous event
+exogenous event clock; 
+exogenous event download(Handset,Chunk,Channel); 
+exogenous event send(Handset,Chunk);
+
+% creation event
+create event creategrid;
+
+% normative events
+inst event intDownload(Handset,Chunk,Channel);
+inst event intSend(Handset);
+inst event intReceive(Handset,Chunk);
+inst event transition;
+
+% violation event
+violation event misuse(Handset);
+
+% fluents
+fluent downloadChunk(Handset,Chunk);
+fluent hasChunk(Handset,Chunk);
+fluent areceive(Handset,Time);
+fluent asend(Handset,Time);
+fluent creceive(Handset,Time);
+fluent csend(Handset,Time);
+fluent transmit(Channel,Time);
+
+fluent previous(Time,Time);
+
+%non-inertial fluents
+fluent busyHSending(Handset); % indicates that the handset is sending to  a peer 
+fluent busyHReceiving(Handset); % indicates that the handset is receiving from a peer
+fluent busyBReceiving(Handset); % indicates that the handset is receiving from the base
+fluent busyChannel(Channel); % indicates that the channel is busy
+
+
+%------------------------------------------------------------------------
+% rules for downloading
+%------------------------------------------------------------------------
+
+% agent requests a block from the base station on channel C
+download(A,X,C) generates intDownload(A,X,C) if not busyChannel(C), not busyBReceiving(A), not busyHSending(A);
+			
+download(A,X,C) generates transition; 
+clock generates transition; 
+
+intDownload(A,X,C) initiates hasChunk(A,X);
+
+intDownload(A,X,C) initiates creceive(A,4), transmit(C,4); 
+
+transition initiates transmit(C,T2) if transmit(C,T1), previous(T1,T2);
+transition initiates creceive(A,T2) if creceive(A,T1), previous(T1,T2);
+transition initiates pow(intDownload(A,X,C)) if creceive(A,1); 
+
+intDownload(A,X,C) terminates pow(intDownload(A,X1,C1)); 
+intDownload(A,X,C) terminates pow(intDownload(B,X1,C));
+intDownload(A,X,C) terminates downloadChunk(A,X);
+intDownload(A,X,C) terminates perm(download(A,X,C1));
+ 
+
+transition terminates csend(A,T); 
+transition terminates creceive(A,T); 
+transition terminates transmit(C,T);
+
+%------------------------------------------------------------------------
+% rules for sharing
+%------------------------------------------------------------------------
+
+send(A,X) generates intSend(A) if hasChunk(A,X), not busyHSending(A), not busyHReceiving(A), not busyBReceiving(A);
+
+send(A,X) generates intReceive(B,X) if not hasChunk(B,X), not busyHSending(B), not busyHReceiving(B), 
+					 hasChunk(A,X), not busyHSending(A), not busyHReceiving(A), not busyBReceiving(A);	
+				
+send(A,X) generates transition;
+clock generates transition;
+
+viol(intReceive(A,X)) generates misuse(A);
+
+intReceive(A,X) initiates hasChunk(A,X);
+
+intSend(B) initiates perm(intReceive(B,X)); 
+intReceive(A,X) initiates areceive(A,2); 
+intSend(B) initiates asend(B,2);
+
+
+transition initiates asend(A,T2) if asend(A,T1), previous(T1,T2);
+transition initiates areceive(A,T2) if areceive(A,T1), previous(T1,T2);
+transition initiates pow(intReceive(A,X)) if areceive(A,1); 
+transition initiates pow(intSend(A)) if asend(A,1); 
+
+intReceive(A,X) terminates perm(intReceive(A,X));
+intReceive(A,X) terminates pow(intReceive(A,X));
+intSend(B) terminates pow(intSend(B)); 
+ 
+misuse(A) terminates pow(intReceive(A,X));
+
+intReceive(A,X) terminates perm(intReceive(A,Y)); 
+
+transition terminates asend(A,T); 
+transition terminates areceive(A,T);
+
