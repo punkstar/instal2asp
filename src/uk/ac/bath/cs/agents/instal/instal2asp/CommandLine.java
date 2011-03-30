@@ -6,8 +6,9 @@ import java.util.Iterator;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.beust.jcommander.Parameter;
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 
 import org.antlr.runtime.*;
 
@@ -25,17 +26,20 @@ public class CommandLine {
 
     @Parameter(names = {"--help", "-h", "-?"}, description = "Show usage information")    
     protected boolean _help = false;
+
+    @Parameter(names = {"-d", "--domain-file"}, description = "Domain file", required = true)
+    protected String _domainFilePath;
     
     public static void main(String[] argv) {
-        CommandLine c = new CommandLine();
-        c.start(new JCommander(c, argv));
+        CommandLine c = new CommandLine(argv);
+        c.start();
     }
     
-    public CommandLine() {}
+    public CommandLine(String[] argv) {
+        this._parseArguments(argv);
+    }
     
-    public void start(JCommander args) {
-        this._optparse = args;
-        
+    public void start() {
         if (this._help) {
             this._optparse.usage();
             System.exit(0);
@@ -51,6 +55,14 @@ public class CommandLine {
             }
         } else {
             this._exit("Can't read some (or all) of the files specified -- they might not exist");
+        }
+    }
+
+    protected void _parseArguments(String[] argv) {
+        try {
+            this._optparse = new JCommander(this, argv);
+        } catch (ParameterException e) {
+            this._exit(e.getMessage());
         }
     }
     
@@ -101,7 +113,9 @@ public class CommandLine {
     
     protected void _exit(String message) {
         this._log(String.format("Error: %s", message), true);
-        this._optparse.usage();
+        if (this._optparse != null) {
+            this._optparse.usage();
+        }
         System.exit(1);
     }
     
