@@ -1,4 +1,4 @@
-// $ANTLR 3.3 Nov 30, 2010 12:45:30 InstAL.g 2011-03-29 15:18:05
+// $ANTLR 3.3 Nov 30, 2010 12:45:30 InstAL.g 2011-03-31 01:24:21
 
 	package uk.ac.bath.cs.agents.instal.parser;
 	
@@ -217,14 +217,14 @@ public class InstALLexer extends Lexer {
         try {
             int _type = LINE_COMMENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:576:2: ( '%' ( (~ ( '\\r' | '\\n' ) )* ) ( '\\r' )? '\\n' )
-            // InstAL.g:576:4: '%' ( (~ ( '\\r' | '\\n' ) )* ) ( '\\r' )? '\\n'
+            // InstAL.g:584:2: ( '%' ( (~ ( '\\r' | '\\n' ) )* ) ( '\\r' )? '\\n' )
+            // InstAL.g:584:4: '%' ( (~ ( '\\r' | '\\n' ) )* ) ( '\\r' )? '\\n'
             {
             match('%'); 
-            // InstAL.g:576:8: ( (~ ( '\\r' | '\\n' ) )* )
-            // InstAL.g:576:10: (~ ( '\\r' | '\\n' ) )*
+            // InstAL.g:584:8: ( (~ ( '\\r' | '\\n' ) )* )
+            // InstAL.g:584:10: (~ ( '\\r' | '\\n' ) )*
             {
-            // InstAL.g:576:10: (~ ( '\\r' | '\\n' ) )*
+            // InstAL.g:584:10: (~ ( '\\r' | '\\n' ) )*
             loop1:
             do {
                 int alt1=2;
@@ -237,7 +237,7 @@ public class InstALLexer extends Lexer {
 
                 switch (alt1) {
             	case 1 :
-            	    // InstAL.g:576:10: ~ ( '\\r' | '\\n' )
+            	    // InstAL.g:584:10: ~ ( '\\r' | '\\n' )
             	    {
             	    if ( (input.LA(1)>='\u0000' && input.LA(1)<='\t')||(input.LA(1)>='\u000B' && input.LA(1)<='\f')||(input.LA(1)>='\u000E' && input.LA(1)<='\uFFFF') ) {
             	        input.consume();
@@ -260,7 +260,7 @@ public class InstALLexer extends Lexer {
 
             }
 
-            // InstAL.g:576:26: ( '\\r' )?
+            // InstAL.g:584:26: ( '\\r' )?
             int alt2=2;
             int LA2_0 = input.LA(1);
 
@@ -269,7 +269,7 @@ public class InstALLexer extends Lexer {
             }
             switch (alt2) {
                 case 1 :
-                    // InstAL.g:576:26: '\\r'
+                    // InstAL.g:584:26: '\\r'
                     {
                     match('\r'); 
 
@@ -296,10 +296,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_INST;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:580:10: ( ( 'institution' | 'inst' ) )
-            // InstAL.g:580:12: ( 'institution' | 'inst' )
+            // InstAL.g:588:10: ( ( 'institution' | 'inst' ) )
+            // InstAL.g:588:12: ( 'institution' | 'inst' )
             {
-            // InstAL.g:580:12: ( 'institution' | 'inst' )
+            // InstAL.g:588:12: ( 'institution' | 'inst' )
             int alt3=2;
             int LA3_0 = input.LA(1);
 
@@ -350,7 +350,7 @@ public class InstALLexer extends Lexer {
             }
             switch (alt3) {
                 case 1 :
-                    // InstAL.g:580:14: 'institution'
+                    // InstAL.g:588:14: 'institution'
                     {
                     match("institution"); 
 
@@ -358,7 +358,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:580:30: 'inst'
+                    // InstAL.g:588:30: 'inst'
                     {
                     match("inst"); 
 
@@ -384,8 +384,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_TYPE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:581:10: ( 'type' )
-            // InstAL.g:581:12: 'type'
+            // InstAL.g:589:10: ( 'type' )
+            // InstAL.g:589:12: 'type'
             {
             match("type"); 
 
@@ -405,8 +405,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_EVENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:582:11: ( 'event' )
-            // InstAL.g:582:13: 'event'
+            // InstAL.g:590:11: ( 'event' )
+            // InstAL.g:590:13: 'event'
             {
             match("event"); 
 
@@ -426,8 +426,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_WITH;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:583:10: ( 'with' )
-            // InstAL.g:583:12: 'with'
+            // InstAL.g:591:10: ( 'with' )
+            // InstAL.g:591:12: 'with'
             {
             match("with"); 
 
@@ -447,8 +447,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_FLUENT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:584:12: ( 'fluent' )
-            // InstAL.g:584:14: 'fluent'
+            // InstAL.g:592:12: ( 'fluent' )
+            // InstAL.g:592:14: 'fluent'
             {
             match("fluent"); 
 
@@ -468,8 +468,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_GENERATES;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:585:15: ( 'generates' )
-            // InstAL.g:585:17: 'generates'
+            // InstAL.g:593:15: ( 'generates' )
+            // InstAL.g:593:17: 'generates'
             {
             match("generates"); 
 
@@ -489,8 +489,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_INITIATES;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:586:15: ( 'initiates' )
-            // InstAL.g:586:17: 'initiates'
+            // InstAL.g:594:15: ( 'initiates' )
+            // InstAL.g:594:17: 'initiates'
             {
             match("initiates"); 
 
@@ -510,8 +510,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_TERMINATES;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:587:16: ( 'terminates' )
-            // InstAL.g:587:18: 'terminates'
+            // InstAL.g:595:16: ( 'terminates' )
+            // InstAL.g:595:18: 'terminates'
             {
             match("terminates"); 
 
@@ -531,8 +531,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_IF;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:588:9: ( 'if' )
-            // InstAL.g:588:11: 'if'
+            // InstAL.g:596:9: ( 'if' )
+            // InstAL.g:596:11: 'if'
             {
             match("if"); 
 
@@ -552,8 +552,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_INITIALLY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:589:15: ( 'initially' )
-            // InstAL.g:589:17: 'initially'
+            // InstAL.g:597:15: ( 'initially' )
+            // InstAL.g:597:17: 'initially'
             {
             match("initially"); 
 
@@ -573,8 +573,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_NOT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:590:10: ( 'not' )
-            // InstAL.g:590:12: 'not'
+            // InstAL.g:598:10: ( 'not' )
+            // InstAL.g:598:12: 'not'
             {
             match("not"); 
 
@@ -594,8 +594,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_OBLIGATION;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:591:16: ( 'obl' )
-            // InstAL.g:591:18: 'obl'
+            // InstAL.g:599:16: ( 'obl' )
+            // InstAL.g:599:18: 'obl'
             {
             match("obl"); 
 
@@ -615,8 +615,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_PERM;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:592:10: ( 'perm' )
-            // InstAL.g:592:12: 'perm'
+            // InstAL.g:600:10: ( 'perm' )
+            // InstAL.g:600:12: 'perm'
             {
             match("perm"); 
 
@@ -636,8 +636,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_POW;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:593:10: ( 'pow' )
-            // InstAL.g:593:12: 'pow'
+            // InstAL.g:601:10: ( 'pow' )
+            // InstAL.g:601:12: 'pow'
             {
             match("pow"); 
 
@@ -657,8 +657,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = KEY_NONINERTIAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:594:17: ( 'noninertial' )
-            // InstAL.g:594:19: 'noninertial'
+            // InstAL.g:602:17: ( 'noninertial' )
+            // InstAL.g:602:19: 'noninertial'
             {
             match("noninertial"); 
 
@@ -678,8 +678,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = LPAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:596:6: ( '(' )
-            // InstAL.g:596:8: '('
+            // InstAL.g:604:6: ( '(' )
+            // InstAL.g:604:8: '('
             {
             match('('); 
 
@@ -698,8 +698,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = RPAR;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:597:6: ( ')' )
-            // InstAL.g:597:8: ')'
+            // InstAL.g:605:6: ( ')' )
+            // InstAL.g:605:8: ')'
             {
             match(')'); 
 
@@ -718,8 +718,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = END;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:598:5: ( ';' )
-            // InstAL.g:598:7: ';'
+            // InstAL.g:606:5: ( ';' )
+            // InstAL.g:606:7: ';'
             {
             match(';'); 
 
@@ -738,10 +738,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = VARIABLE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:599:9: ( ( UCALPHA | DIGIT )+ )
-            // InstAL.g:599:11: ( UCALPHA | DIGIT )+
+            // InstAL.g:607:9: ( ( UCALPHA | DIGIT )+ )
+            // InstAL.g:607:11: ( UCALPHA | DIGIT )+
             {
-            // InstAL.g:599:11: ( UCALPHA | DIGIT )+
+            // InstAL.g:607:11: ( UCALPHA | DIGIT )+
             int cnt4=0;
             loop4:
             do {
@@ -795,11 +795,11 @@ public class InstALLexer extends Lexer {
         try {
             int _type = TYPE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:600:6: ( UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )* )
-            // InstAL.g:600:8: UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*
+            // InstAL.g:608:6: ( UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )* )
+            // InstAL.g:608:8: UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*
             {
             mUCALPHA(); 
-            // InstAL.g:600:16: ( DIGIT | UCALPHA | LCALPHA | '_' )*
+            // InstAL.g:608:16: ( DIGIT | UCALPHA | LCALPHA | '_' )*
             loop5:
             do {
                 int alt5=2;
@@ -848,11 +848,11 @@ public class InstALLexer extends Lexer {
         try {
             int _type = LITERAL;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:601:9: ( LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )* )
-            // InstAL.g:601:11: LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*
+            // InstAL.g:609:9: ( LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )* )
+            // InstAL.g:609:11: LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*
             {
             mLCALPHA(); 
-            // InstAL.g:601:19: ( DIGIT | UCALPHA | LCALPHA | '_' )*
+            // InstAL.g:609:19: ( DIGIT | UCALPHA | LCALPHA | '_' )*
             loop6:
             do {
                 int alt6=2;
@@ -901,10 +901,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = LT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:602:4: ( ( '<' | 'lt' | 'LT' ) )
-            // InstAL.g:602:6: ( '<' | 'lt' | 'LT' )
+            // InstAL.g:610:4: ( ( '<' | 'lt' | 'LT' ) )
+            // InstAL.g:610:6: ( '<' | 'lt' | 'LT' )
             {
-            // InstAL.g:602:6: ( '<' | 'lt' | 'LT' )
+            // InstAL.g:610:6: ( '<' | 'lt' | 'LT' )
             int alt7=3;
             switch ( input.LA(1) ) {
             case '<':
@@ -931,14 +931,14 @@ public class InstALLexer extends Lexer {
 
             switch (alt7) {
                 case 1 :
-                    // InstAL.g:602:8: '<'
+                    // InstAL.g:610:8: '<'
                     {
                     match('<'); 
 
                     }
                     break;
                 case 2 :
-                    // InstAL.g:602:14: 'lt'
+                    // InstAL.g:610:14: 'lt'
                     {
                     match("lt"); 
 
@@ -946,7 +946,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:602:21: 'LT'
+                    // InstAL.g:610:21: 'LT'
                     {
                     match("LT"); 
 
@@ -972,10 +972,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = GT;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:603:4: ( ( '>' | 'gt' | 'GT' ) )
-            // InstAL.g:603:6: ( '>' | 'gt' | 'GT' )
+            // InstAL.g:611:4: ( ( '>' | 'gt' | 'GT' ) )
+            // InstAL.g:611:6: ( '>' | 'gt' | 'GT' )
             {
-            // InstAL.g:603:6: ( '>' | 'gt' | 'GT' )
+            // InstAL.g:611:6: ( '>' | 'gt' | 'GT' )
             int alt8=3;
             switch ( input.LA(1) ) {
             case '>':
@@ -1002,14 +1002,14 @@ public class InstALLexer extends Lexer {
 
             switch (alt8) {
                 case 1 :
-                    // InstAL.g:603:8: '>'
+                    // InstAL.g:611:8: '>'
                     {
                     match('>'); 
 
                     }
                     break;
                 case 2 :
-                    // InstAL.g:603:14: 'gt'
+                    // InstAL.g:611:14: 'gt'
                     {
                     match("gt"); 
 
@@ -1017,7 +1017,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:603:21: 'GT'
+                    // InstAL.g:611:21: 'GT'
                     {
                     match("GT"); 
 
@@ -1043,10 +1043,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = EQ;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:604:4: ( ( '=' | '==' | 'eq' | 'EQ' ) )
-            // InstAL.g:604:6: ( '=' | '==' | 'eq' | 'EQ' )
+            // InstAL.g:612:4: ( ( '=' | '==' | 'eq' | 'EQ' ) )
+            // InstAL.g:612:6: ( '=' | '==' | 'eq' | 'EQ' )
             {
-            // InstAL.g:604:6: ( '=' | '==' | 'eq' | 'EQ' )
+            // InstAL.g:612:6: ( '=' | '==' | 'eq' | 'EQ' )
             int alt9=4;
             switch ( input.LA(1) ) {
             case '=':
@@ -1079,14 +1079,14 @@ public class InstALLexer extends Lexer {
 
             switch (alt9) {
                 case 1 :
-                    // InstAL.g:604:8: '='
+                    // InstAL.g:612:8: '='
                     {
                     match('='); 
 
                     }
                     break;
                 case 2 :
-                    // InstAL.g:604:14: '=='
+                    // InstAL.g:612:14: '=='
                     {
                     match("=="); 
 
@@ -1094,7 +1094,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:604:21: 'eq'
+                    // InstAL.g:612:21: 'eq'
                     {
                     match("eq"); 
 
@@ -1102,7 +1102,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 4 :
-                    // InstAL.g:604:28: 'EQ'
+                    // InstAL.g:612:28: 'EQ'
                     {
                     match("EQ"); 
 
@@ -1128,10 +1128,10 @@ public class InstALLexer extends Lexer {
         try {
             int _type = NE;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:605:4: ( ( '!=' | 'ne' | 'NE' | '<>' ) )
-            // InstAL.g:605:6: ( '!=' | 'ne' | 'NE' | '<>' )
+            // InstAL.g:613:4: ( ( '!=' | 'ne' | 'NE' | '<>' ) )
+            // InstAL.g:613:6: ( '!=' | 'ne' | 'NE' | '<>' )
             {
-            // InstAL.g:605:6: ( '!=' | 'ne' | 'NE' | '<>' )
+            // InstAL.g:613:6: ( '!=' | 'ne' | 'NE' | '<>' )
             int alt10=4;
             switch ( input.LA(1) ) {
             case '!':
@@ -1163,7 +1163,7 @@ public class InstALLexer extends Lexer {
 
             switch (alt10) {
                 case 1 :
-                    // InstAL.g:605:8: '!='
+                    // InstAL.g:613:8: '!='
                     {
                     match("!="); 
 
@@ -1171,7 +1171,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:605:15: 'ne'
+                    // InstAL.g:613:15: 'ne'
                     {
                     match("ne"); 
 
@@ -1179,7 +1179,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:605:22: 'NE'
+                    // InstAL.g:613:22: 'NE'
                     {
                     match("NE"); 
 
@@ -1187,7 +1187,7 @@ public class InstALLexer extends Lexer {
                     }
                     break;
                 case 4 :
-                    // InstAL.g:605:29: '<>'
+                    // InstAL.g:613:29: '<>'
                     {
                     match("<>"); 
 
@@ -1211,8 +1211,8 @@ public class InstALLexer extends Lexer {
     // $ANTLR start "UCALPHA"
     public final void mUCALPHA() throws RecognitionException {
         try {
-            // InstAL.g:607:18: ( 'A' .. 'Z' )
-            // InstAL.g:607:20: 'A' .. 'Z'
+            // InstAL.g:615:18: ( 'A' .. 'Z' )
+            // InstAL.g:615:20: 'A' .. 'Z'
             {
             matchRange('A','Z'); 
 
@@ -1227,8 +1227,8 @@ public class InstALLexer extends Lexer {
     // $ANTLR start "LCALPHA"
     public final void mLCALPHA() throws RecognitionException {
         try {
-            // InstAL.g:608:18: ( 'a' .. 'z' )
-            // InstAL.g:608:20: 'a' .. 'z'
+            // InstAL.g:616:18: ( 'a' .. 'z' )
+            // InstAL.g:616:20: 'a' .. 'z'
             {
             matchRange('a','z'); 
 
@@ -1243,8 +1243,8 @@ public class InstALLexer extends Lexer {
     // $ANTLR start "DIGIT"
     public final void mDIGIT() throws RecognitionException {
         try {
-            // InstAL.g:609:17: ( '0' .. '9' )
-            // InstAL.g:609:19: '0' .. '9'
+            // InstAL.g:617:17: ( '0' .. '9' )
+            // InstAL.g:617:19: '0' .. '9'
             {
             matchRange('0','9'); 
 
@@ -1261,8 +1261,8 @@ public class InstALLexer extends Lexer {
         try {
             int _type = ANY;
             int _channel = DEFAULT_TOKEN_CHANNEL;
-            // InstAL.g:611:5: ( . )
-            // InstAL.g:611:8: .
+            // InstAL.g:619:5: ( . )
+            // InstAL.g:619:8: .
             {
             matchAny(); 
              skip(); 
