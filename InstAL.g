@@ -49,12 +49,6 @@ options {
 		}
 		log("list end");
 	}
-
-	private void outputASP() {
-		AnsProlog asp = new AnsProlog(this.i, this.d);
-		asp.generate();
-		//System.out.println(asp.toString());
-	}
 	
 	// Constructors
 	protected void _setInsitutionName(String name) {
@@ -391,7 +385,7 @@ instal_specification
 		institution_decl 			{ _setInsitutionName($institution_decl.name); }
 		( constituent_decl | LINE_COMMENT )*
 		( initially_decl   | LINE_COMMENT )*
-		EOF					{ outputASP(); } 
+		EOF
 	;
 		
 institution_decl returns [String name]
