@@ -1,21 +1,30 @@
 package uk.ac.bath.cs.agents.instal.instal2asp;
 
-import java.io.*;
-
-import java.util.Iterator;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import org.antlr.runtime.ANTLRFileStream;
+import org.antlr.runtime.CharStream;
+import org.antlr.runtime.CommonTokenStream;
+import org.antlr.runtime.RecognitionException;
+
+import uk.ac.bath.cs.agents.instal.Domain;
+import uk.ac.bath.cs.agents.instal.Institution;
+import uk.ac.bath.cs.agents.instal.asp.AnsProlog;
+import uk.ac.bath.cs.agents.instal.parser.InstALLexer;
+import uk.ac.bath.cs.agents.instal.parser.InstALParser;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import org.antlr.runtime.*;
-
-import uk.ac.bath.cs.agents.instal.parser.*;
-
 public class CommandLine {
     
+    protected Domain _domain;
     protected JCommander _optparse;
     
     @Parameter(description = "<InstAL specification>+")
@@ -27,7 +36,7 @@ public class CommandLine {
     @Parameter(names = {"--help", "-h", "-?"}, description = "Show usage information")    
     protected boolean _help = false;
 
-    @Parameter(names = {"-d", "--domain-file"}, description = "Domain file", required = true)
+    @Parameter(names = {"-d", "--domain-file"}, description = "Domain file")
     protected String _domainFilePath;
     
     public static void main(String[] argv) {
@@ -45,8 +54,18 @@ public class CommandLine {
             System.exit(0);
         }
         
-        this._validateArguments(); // Passing control to this.  Could exit out.
+        this._validateArguments();
         
+        DomainFile df = new DomainFile(this._domainFilePath);
+        
+        try {
+			this._domain = df.getDomain();
+		} catch (FileNotFoundException e) {
+			this._exception("Domain File: File not found");
+		} catch (IOException e) {
+			this._exception("Domain File: IOException: " + e.getMessage());
+		}
+
         if (this._filesExist(this._files)) {
             Iterator<String> iter = this._files.iterator();
             while (iter.hasNext()) {
@@ -69,6 +88,10 @@ public class CommandLine {
     protected void _validateArguments() {
         if (this._files.size() == 0) {
             this._exit("No InstAL file(s) provided");
+        }
+
+        if (this._domainFilePath == null || this._domainFilePath.isEmpty()) {
+            this._exit("No domain file provided");
         }
     }
 
@@ -97,6 +120,12 @@ public class CommandLine {
             InstALParser g = new InstALParser(tokens, null);
             
             g.instal_specification();
+            Institution i = g.i;
+            
+    		AnsProlog asp = new AnsProlog(i, this._domain);
+    		asp.generate();
+    		System.out.println(asp.toString());
+    		
         } catch (RecognitionException e_r) {
             this._exception("RecognitionException: " + e_r.getMessage());
         } catch (IllegalArgumentException e_i) {

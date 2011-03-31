@@ -29,6 +29,7 @@ options {
 
 @members {	
 	public Institution i;
+	public Domain d = new Domain();
 	protected Hashtable<String, Type> _typeMap = new Hashtable<String, Type>();
 	protected Hashtable<String, Fluent> _fluentMap = new Hashtable<String, Fluent>();
 	protected Hashtable<String, uk.ac.bath.cs.agents.instal.Event> _eventMap = new Hashtable<String, uk.ac.bath.cs.agents.instal.Event>();
@@ -50,9 +51,9 @@ options {
 	}
 
 	private void outputASP() {
-		AnsProlog asp = new AnsProlog(this.i, new Domain());
+		AnsProlog asp = new AnsProlog(this.i, this.d);
 		asp.generate();
-		System.out.println(asp.toString());
+		//System.out.println(asp.toString());
 	}
 	
 	// Constructors
@@ -507,6 +508,7 @@ fluent_with_variables_with_negation
 	|	fluent_varient		{ $fluents_with_variables_with_negation::list.add(new FluentCondition(true,  $fluent_varient.name, $fluent_varient.args)); }
 	;
 	
+	
 event_varient returns [String name, ArrayList<String> args]
 	:	( 'viol' LPAR event_name  variable_arguments? RPAR )	{ $name = $event_name.text; $args = $variable_arguments.args; }
 	| 	( event_name  variable_arguments? )			{ $name = $event_name.text; $args = $variable_arguments.args; }
@@ -583,7 +585,7 @@ LINE_COMMENT
 	;
 	
 /**  KEYWORDS **/
-KEY_INST	:	( 'institution' | 'inst');
+KEY_INST	:	( 'institution' | 'inst' );
 KEY_TYPE	:	'type';
 KEY_EVENT	:	'event';
 KEY_WITH	:	'with';
