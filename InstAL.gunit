@@ -1,0 +1,54 @@
+// Grammar Unit Testing
+gunit InstAL;
+
+@header {
+    package uk.ac.bath.cs.agents.instal.parser;
+}
+
+institution_decl:
+    "inst grid;"            OK
+    "inst instname;"        OK
+    "institution instname;" OK
+    "inst instname"         FAIL
+    "institution instname"  FAIL
+    "inst Instname;"        FAIL
+    "inst 123;"             FAIL
+
+type_decl:
+    "type Person;"  OK
+    "type Person"   FAIL
+    "type person;"  FAIL
+
+event_decl:
+    // Different event types
+    "creation event eventName(Person,Country);"     OK
+    "inst event eventName(Person,Country);"         OK
+    "violation event eventName(Person,Country);"    OK
+    "exogenous event eventName(Person,Country);"    OK
+    
+    // Simple syntax
+    "exogenous event eventName();"                  OK
+    "exogenous event eventName();"                  OK
+    "exogenous event eventName;"                    OK
+    "exogenous event eventName()"                   FAIL
+    "exogenous event;"                              FAIL
+
+    // Complex syntax
+    "exogenous event eventName(A:Person,B:Country) with A!=B;"    OK
+
+// Lexical Tests
+TYPE:
+    "Test"  OK
+    "TEST"  OK
+    "T_est" OK
+    "TeST_" OK
+    "test"  FAIL
+    "_Test" FAIL
+
+LITERAL:
+    "literal"   OK
+    "l1t3r4l"   OK
+    "l_teral"   OK
+    "Literal"   FAIL
+    "LITERAL"   FAIL
+;
