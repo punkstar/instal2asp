@@ -552,12 +552,28 @@ terminates_rule
 	
 /* INITIALLY */
 initially_decl
-	:	KEY_INITIALLY fluents_with_variables END	{ log("TODO: initially_decl: " + $fluents_with_variables.text); }
+	:	KEY_INITIALLY initially_component+ END	{ log("TODO: initially_decl"); }
+	;
+	
+initially_component
+	:	fluents_with_variables
+	|	','? obligation_statement ','?
 	;
 	
 /* OBLIGATIONS */
 obligation_decl
-	:	KEY_OBLIGATION LPAR act=event_varient ',' before=event_varient ',' otherwise=event_varient RPAR END	{ _addObligation($act.name, $act.args, $before.name, $before.args, $otherwise.name, $otherwise.args); }
+	:	o=obligation_statement END	{ _addObligation(o.act_name, o.act_args, o.before_name, o.before_args, o.otherwise_name, o.otherwise_args); }
+	;
+	
+obligation_statement returns [String act_name, ArrayList<String> act_args, String before_name, ArrayList<String> before_args, String otherwise_name, ArrayList<String> otherwise_args]
+	:	KEY_OBLIGATION LPAR act=event_varient ',' before=event_varient ',' otherwise=event_varient RPAR {
+			$act_name = $act.name;
+			$act_args = $act.args;
+			$before_name = $before.name;
+			$before_args = $before.args;
+			$otherwise_name = $otherwise.name;
+			$otherwise_args = $otherwise.args;
+		}
 	;
 	
 /* UTILITY */
