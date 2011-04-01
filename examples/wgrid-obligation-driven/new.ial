@@ -1,0 +1,177 @@
+institution grid;
+
+type Handset;
+type Chunk;
+type Channel;
+type Time;
+
+% exogenous events
+exogenous event download(Handset,Chunk,Channel);
+exogenous event send(Handset,Chunk);
+exogenous event clock;
+
+% creation event
+create event creategrid;
+
+% normative events
+inst event intDownload(Handset,Chunk,Channel);
+inst event intSend(Handset,Chunk);
+inst event intReceive(Handset,Chunk);
+inst event transition;
+inst event intDeadline;
+
+% violation event
+violation event misuse(Handset);
+
+% fluents
+fluent downloadChunk(Handset,Chunk);
+fluent hasChunk(Handset,Chunk);
+fluent areceive(Handset,Time);
+fluent asend(Handset,Time);
+fluent creceive(Handset,Time);
+fluent transmit(Channel,Time);
+fluent previous(Time,Time);
+fluent countdown(Time); 
+
+%non-inertial fluents
+fluent busyHSending(Handset); % indicates that the handset is sending to  a peer 
+fluent busyHReceiving(Handset); % indicates that the handset is receiving from a peer
+fluent busyBReceiving(Handset); % indicates that the handset is receiving from the base
+fluent busyChannel(Channel); % indicates that the channel is busy
+
+%------------------------------------------------------------------------
+% noninertial rules
+%------------------------------------------------------------------------
+%always busyHSending(Handset) when asend(Handset,Time);
+%always busyHReceiving(Handset) when areceive(Handset,Time);
+%always busyBReceiving(Handset) when creceive(Handset,Time);
+
+%------------------------------------------------------------------------
+% transition rules
+%------------------------------------------------------------------------
+
+download(A,X,C) generates transition;
+send(A,X) generates transition;
+clock generates transition;
+
+transition initiates transmit(C,T2) if transmit(C,T1), previous(T1,T2);
+transition initiates creceive(A,T2) if creceive(A,T1), previous(T1,T2);
+transition initiates countdown(T2) if countdown(T1), previous(T1,T2);
+transition initiates pow(intDownload(A,X,C)) if creceive(A,Time); 
+transition initiates pow(intSend(A,C)) if areceive(A,Time);
+transition initiates perm(intDownload(A,X,C)) if areceive(A,Time);
+
+transition initiates asend(A,T2) if asend(A,T1), previous(T1,T2);
+transition initiates areceive(A,T2) if areceive(A,T1), previous(T1,T2);
+transition initiates pow(intReceive(A,X)) if areceive(A,Time); 
+transition initiates pow(intSend(A,X)) if asend(A,Time); 
+
+transition terminates creceive(A,Time); 
+transition terminates transmit(C,Time);
+transition terminates asend(A,Time); 
+transition terminates areceive(A,Time);
+transition generates intDeadline if countdown(1);
+
+%------------------------------------------------------------------------
+% rules for downloading
+%------------------------------------------------------------------------
+
+% agent requests a block from the base station on channel C
+download(A,X,C) generates intDownload(A,X,C) if not hasChunk(A,X), not busyChannel(C), not busyBReceiving(A), not busyHSending(A), not busyHReceiving(A);
+
+intDownload(A,X,C) initiates hasChunk(A,X);
+intDownload(A,X,C) initiates creceive(A,4), transmit(C,4); % agent and channel are busy for 4 time-units when a chunk is downloaded from the BS
+
+intDownload(A,X,C) terminates pow(intDownload(A,X1,C1)); 
+intDownload(A,X,C) terminates pow(intDownload(B,X1,C));
+intDownload(A,X,C) terminates downloadChunk(A,X);
+intDownload(A,X,C) terminates perm(intDownload(A,X,C1));
+
+%------------------------------------------------------------------------
+% rules for sharing
+%------------------------------------------------------------------------
+
+send(A,X) generates intSend(A,X) if hasChunk(A,X), not busyHSending(A), not busyHReceiving(A), not busyBReceiving(A);
+
+send(A,X) generates intReceive(B,X) if not hasChunk(B,X), not busyHSending(B), not busyHReceiving(B), 
+					 hasChunk(A,X), not busyHSending(A), not busyHReceiving(A), not busyBReceiving(A);	
+				
+
+intReceive(A,X) initiates hasChunk(A,X);
+intReceive(A,X) initiates areceive(A,2); 
+intReceive(A,X) terminates perm(intReceive(A,X));
+intReceive(A,X) terminates pow(intReceive(A,X));
+intReceive(A,X) terminates perm(intReceive(A,Y)); 
+
+intSend(A,X) initiates asend(A,2);
+intSend(A,X) terminates pow(intSend(A,X1)); 
+ 
+misuse(A) terminates pow(intReceive(A,X));
+
+%------------------------------------------------------------------------
+% downloading
+%------------------------------------------------------------------------
+
+initially pow(transition), perm(transition),
+          perm(clock),
+          pow(intDownload(A,B,C)),perm(intDownload(A,B,C)),
+          perm(download(alice,x1,C)), perm(download(alice,x3,C)),
+          perm(download(bob,x2,C)), perm(download(bob,x4,C)),
+          downloadChunk(alice,x1), downloadChunk(alice,x3),
+	  downloadChunk(bob,x2), downloadChunk(bob,x4);
+
+%------------------------------------------------------------------------
+% sharing
+%------------------------------------------------------------------------
+
+initially pow(transition), perm(transition),
+          perm(clock),
+          pow(intReceive(Handset,Chunk)), pow(intSend(Handset,Chunk)),
+          perm(send(Handset,Chunk)), pow(intSend(Handset,Chunk)),
+          perm(intReceive(Handset,Chunk)), perm(intSend(Handset,Chunk)),
+	  obl(send(alice,x1), intDeadline, misuse(alice)), obl(send(alice,x3), intDeadline, misuse(alice)),
+	  obl(send(bob,x2), intDeadline, misuse(bob)), obl(send(bob,x4), intDeadline, misuse(bob));
+
+
+%------------------------------------------------------------------------
+% initially
+%------------------------------------------------------------------------
+
+initially countdown(20);
+initially pow(intDeadline);
+initially perm(intDeadline);
+
+%------------------------------------------------------------------------
+% time
+%------------------------------------------------------------------------
+
+initially previous(30,29);
+initially previous(29,28);
+initially previous(28,27);
+initially previous(27,26);
+initially previous(26,25);
+initially previous(25,24);
+initially previous(24,23);
+initially previous(23,22);
+initially previous(22,21);
+initially previous(21,20);
+initially previous(20,19);
+initially previous(19,18);
+initially previous(18,17);
+initially previous(17,16);
+initially previous(16,15);
+initially previous(15,14);
+initially previous(14,13);
+initially previous(13,12);
+initially previous(12,11);
+initially previous(11,10);
+initially previous(10,9);
+initially previous(9,8);
+initially previous(8,7);
+initially previous(7,6);
+initially previous(6,5);
+initially previous(5,4);
+initially previous(4,3);
+initially previous(3,2);
+initially previous(2,1);
+ 
