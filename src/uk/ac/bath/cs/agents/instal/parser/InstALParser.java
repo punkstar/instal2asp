@@ -1,4 +1,4 @@
-// $ANTLR 3.3 Nov 30, 2010 12:45:30 InstAL.g 2011-03-31 01:24:21
+// $ANTLR 3.3 Nov 30, 2010 12:45:30 InstAL.g 2011-04-01 13:16:58
 
 	package uk.ac.bath.cs.agents.instal.parser;
 	
@@ -20,7 +20,7 @@ import org.antlr.runtime.tree.*;
 
 public class InstALParser extends Parser {
     public static final String[] tokenNames = new String[] {
-        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "LINE_COMMENT", "KEY_INST", "END", "LITERAL", "KEY_TYPE", "TYPE", "KEY_WITH", "KEY_EVENT", "KEY_NONINERTIAL", "KEY_FLUENT", "KEY_GENERATES", "KEY_IF", "KEY_NOT", "LPAR", "RPAR", "KEY_POW", "KEY_PERM", "KEY_INITIATES", "KEY_TERMINATES", "KEY_INITIALLY", "KEY_OBLIGATION", "VARIABLE", "LT", "GT", "EQ", "NE", "UCALPHA", "DIGIT", "LCALPHA", "ANY", "'exogenous'", "'inst'", "'creation'", "'violation'", "','", "'viol'", "':'"
+        "<invalid>", "<EOR>", "<DOWN>", "<UP>", "LINE_COMMENT", "KEY_INST", "END", "LITERAL", "KEY_TYPE", "TYPE", "KEY_WITH", "KEY_EVENT", "EVENT_KEY_CREATE", "KEY_NONINERTIAL", "KEY_FLUENT", "KEY_GENERATES", "KEY_IF", "KEY_NOT", "LPAR", "RPAR", "KEY_POW", "KEY_PERM", "KEY_INITIATES", "KEY_TERMINATES", "KEY_INITIALLY", "KEY_OBLIGATION", "LT", "GT", "EQ", "NE", "UCALPHA", "DIGIT", "LCALPHA", "ANY", "'exogenous'", "'inst'", "'violation'", "','", "'viol'", "':'"
     };
     public static final int EOF=-1;
     public static final int T__34=34;
@@ -29,7 +29,6 @@ public class InstALParser extends Parser {
     public static final int T__37=37;
     public static final int T__38=38;
     public static final int T__39=39;
-    public static final int T__40=40;
     public static final int LINE_COMMENT=4;
     public static final int KEY_INST=5;
     public static final int END=6;
@@ -38,20 +37,20 @@ public class InstALParser extends Parser {
     public static final int TYPE=9;
     public static final int KEY_WITH=10;
     public static final int KEY_EVENT=11;
-    public static final int KEY_NONINERTIAL=12;
-    public static final int KEY_FLUENT=13;
-    public static final int KEY_GENERATES=14;
-    public static final int KEY_IF=15;
-    public static final int KEY_NOT=16;
-    public static final int LPAR=17;
-    public static final int RPAR=18;
-    public static final int KEY_POW=19;
-    public static final int KEY_PERM=20;
-    public static final int KEY_INITIATES=21;
-    public static final int KEY_TERMINATES=22;
-    public static final int KEY_INITIALLY=23;
-    public static final int KEY_OBLIGATION=24;
-    public static final int VARIABLE=25;
+    public static final int EVENT_KEY_CREATE=12;
+    public static final int KEY_NONINERTIAL=13;
+    public static final int KEY_FLUENT=14;
+    public static final int KEY_GENERATES=15;
+    public static final int KEY_IF=16;
+    public static final int KEY_NOT=17;
+    public static final int LPAR=18;
+    public static final int RPAR=19;
+    public static final int KEY_POW=20;
+    public static final int KEY_PERM=21;
+    public static final int KEY_INITIATES=22;
+    public static final int KEY_TERMINATES=23;
+    public static final int KEY_INITIALLY=24;
+    public static final int KEY_OBLIGATION=25;
     public static final int LT=26;
     public static final int GT=27;
     public static final int EQ=28;
@@ -86,10 +85,11 @@ public class InstALParser extends Parser {
     public String getGrammarFileName() { return "InstAL.g"; }
 
     	
-    	public Institution i;
+    	public Institution i = new Institution("holder", 2); // Set it to a holder institution for testing the grammar
     	public Domain d = new Domain();
     	protected Hashtable<String, Type> _typeMap = new Hashtable<String, Type>();
-    	protected Hashtable<String, Fluent> _fluentMap = new Hashtable<String, Fluent>();
+    	protected Hashtable<String, NoninertialFluent> _noninertialFluentMap = new Hashtable<String, NoninertialFluent>();
+    	protected Hashtable<String, Fluent> _inertialFluentMap = new Hashtable<String, Fluent>();
     	protected Hashtable<String, uk.ac.bath.cs.agents.instal.Event> _eventMap = new Hashtable<String, uk.ac.bath.cs.agents.instal.Event>();
 
     	private static void log(String message) {
@@ -107,16 +107,10 @@ public class InstALParser extends Parser {
     		}
     		log("list end");
     	}
-
-    	private void outputASP() {
-    		AnsProlog asp = new AnsProlog(this.i, this.d);
-    		asp.generate();
-    		//System.out.println(asp.toString());
-    	}
     	
     	// Constructors
     	protected void _setInsitutionName(String name) {
-    		i = new Institution(name, 10);
+    		i.setName(name);
     	}
     	
     	protected void _addType(String name) {
@@ -132,107 +126,112 @@ public class InstALParser extends Parser {
     	
     	// OMGWTFBBQ!
     	protected void _addEvent(String type, String name, ArrayList<String> args) {
-    		if (type.equals("exogenous")) {
-    			ExogenousEvent e = new ExogenousEvent(name);
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
-    		
-    					e.addParameter(t);
+    		try {
+    			if (type.equals("exogenous")) {
+    				ExogenousEvent e = new ExogenousEvent(name);
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						e.addParameter(t);
+    					}
     				}
-    			}
-    			i.event(e);
-    			_eventMap.put(name, e);
-    		} else if (type.equals("inst")) {
-    			NormativeEvent e = new NormativeEvent(name);
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
-    		
-    					e.addParameter(t);
+    				i.event(e);
+    				_eventMap.put(name, e);
+    			} else if (type.equals("inst")) {
+    				NormativeEvent e = new NormativeEvent(name);
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						e.addParameter(t);
+    					}
     				}
-    			}
-    			i.event(e);
-    			_eventMap.put(name, e);
-    		} else if (type.equals("creation")) {
-    			log("Created creation event: " + name);
-    			CreationEvent e = new CreationEvent(name);
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
-    		
-    					e.addParameter(t);
+    				i.event(e);
+    				_eventMap.put(name, e);
+    			} else if (type.equals("creation")) {
+    				CreationEvent e = new CreationEvent(name);
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						e.addParameter(t);
+    					}
     				}
-    			}
-    			i.event(e);
-    			_eventMap.put(name, e);
-    		} else if (type.equals("violation")) {
-    			ViolationEvent e = new ViolationEvent(name);
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
-    		
-    					e.addParameter(t);
+    				i.event(e);
+    				_eventMap.put(name, e);
+    			} else if (type.equals("violation")) {
+    				ViolationEvent e = new ViolationEvent(name);
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						e.addParameter(t);
+    					}
     				}
+    				i.event(e);
+    				_eventMap.put(name, e);
+    			} else {
+    				emitErrorMessage("Unrecognised event type '" + type + "'");
+    				return;
     			}
-    			i.event(e);
-    			_eventMap.put(name, e);
-    		} else {
-    			emitErrorMessage("Unrecognised event type '" + type + "'");
-    			return;
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with an event definition: " + e.getMessage());
     		}
     	}
     	
     	protected void _addFluent(String type, String name, ArrayList<String> args) {
-    	
-    		if (_fluentMap.containsKey(name)) {
-    			emitErrorMessage("Fluent '" + name + "' already defined");
-    			return;
-    		}
-    	
-    		if (type.equals("noninertial")) {
-    			NoninertialFluent f = new NoninertialFluent(name);
-    			
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
-    		
-    					f.addParameter(t);
-    				}
+    		try {
+    			if (_inertialFluentMap.containsKey(name)) {
+    				emitErrorMessage("Fluent '" + name + "' already defined");
+    				return;
     			}
-    			
-    			i.fluent(f);
-    			
-    			_fluentMap.put(name, f);
-    		} else if (type.equals("inertial")) {
-    			Fluent f = new Fluent(name);
-    			
-    			if (args != null) {
-    				Iterator<String> iter = args.iterator();
-    				while (iter.hasNext()) {
-    					String key = iter.next();
-    					Type t = _getType(key);
     		
-    					f.addParameter(t);
+    			if (type.equals("noninertial")) {
+    				NoninertialFluent f = new NoninertialFluent(name);
+    				
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						f.addParameter(t);
+    					}
     				}
+    				
+    				i.noninertial(f);
+    				_noninertialFluentMap.put(name, f);
+    			} else if (type.equals("inertial")) {
+    				Fluent f = new Fluent(name);
+    				
+    				if (args != null) {
+    					Iterator<String> iter = args.iterator();
+    					while (iter.hasNext()) {
+    						String key = iter.next();
+    						Type t = _getType(key);
+    			
+    						f.addParameter(t);
+    					}
+    				}
+    				
+    				i.fluent(f);
+    				
+    				_inertialFluentMap.put(name, f);
+    			} else {
+    				emitErrorMessage("Unrecognised fluent type '" + type + "'");
+    				return;
     			}
-    			
-    			i.fluent(f);
-    			
-    			_fluentMap.put(name, f);
-    		} else {
-    			emitErrorMessage("Unrecognised fluent type '" + type + "'");
-    			return;
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with a fluent definition: " + e.getMessage());
     		}
     	}
 
@@ -242,14 +241,18 @@ public class InstALParser extends Parser {
     		if (event_variables != null) {
     			event_vars_array = event_variables.toArray(new String[] {});
     		}
-    	
-    		if (_getEvent(event) != null) {
-    			Generates g = new Generates(_getEvent(event), event_vars_array);
-    			
-    			g = (Generates) _addRuleConditions(g,condition_fluents);
-    			g = (Generates) _addRuleResultEvents(g,result_events);
-    			
-    			i.generates(g);
+    		
+    		try {
+    			if (_getEvent(event) != null) {
+    				Generates g = new Generates(_getEvent(event), event_vars_array);
+    				
+    				g = (Generates) _addRuleConditions(g,condition_fluents);
+    				g = (Generates) _addRuleResultEvents(g,result_events);
+    				
+    				i.generates(g);
+    			}
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with a generates rule: " + e.getMessage());
     		}
     	}
     	
@@ -260,19 +263,21 @@ public class InstALParser extends Parser {
     			event_vars_array = event_variables.toArray(new String[] {});
     		}
     		
-    		log("Initiates event: " + event);
-    	
-    		if (_getEvent(event) != null) {
-    			Initiates in = new Initiates(_getEvent(event), event_vars_array);
-    			
-    			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
-    				in = (Initiates) _addRuleConditions(in, condition_fluents);
-    				in = (Initiates) _addRuleResultFluents(in, result_fluents);
+    		try {
+    			if (_getEvent(event) != null) {
+    				Initiates in = new Initiates(_getEvent(event), event_vars_array);
     				
-    				i.initiates(in);
-    			} else {
-    				log("Ignoring inititates because there are fluents that don't exist");
+    				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
+    					in = (Initiates) _addRuleConditions(in, condition_fluents);
+    					in = (Initiates) _addRuleResultFluents(in, result_fluents);
+    					
+    					i.initiates(in);
+    				} else {
+    					log("Ignoring inititates because there are fluents that don't exist");
+    				}
     			}
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with an initiates rule: " + e.getMessage());
     		}
     	}
 
@@ -283,33 +288,49 @@ public class InstALParser extends Parser {
     			event_vars_array = event_variables.toArray(new String[] {});
     		}
     	
-    		if (_getEvent(event) != null) {
-    			Terminates t = new Terminates(_getEvent(event), event_vars_array);
-    			
-    			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
-    				t = (Terminates) _addRuleConditions(t, condition_fluents);
-    				t = (Terminates) _addRuleResultFluents(t, result_fluents);
+    		try {
+    			if (_getEvent(event) != null) {
+    				Terminates t = new Terminates(_getEvent(event), event_vars_array);
     				
-    				i.terminates(t);
-    			} else {
-    				log("Ignoring terminates because there are fluents that don't exist");
-    			}
+    				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
+    					t = (Terminates) _addRuleConditions(t, condition_fluents);
+    					t = (Terminates) _addRuleResultFluents(t, result_fluents);
+    					
+    					i.terminates(t);
+    				} else {
+    					log("Ignoring terminates because there are fluents that don't exist");
+    				}
+    			}		
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with a terminates rule: " + e.getMessage());
     		}
     	}
     	
-    	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) {
+    	protected void _addObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
+    		try {
+    			Obligation o = new Obligation();
+    			
+    			o.act(_getEvent(act), act_vars.toArray(new String[] {}))
+    			 .before(_getEvent(before), before_vars.toArray(new String[] {}))
+    			 .otherwise(_getEvent(otherwise), otherwise_vars.toArray(new String[] {}));
+    			 
+    			i.obl(o);
+    		} catch (Exception e) {
+    			emitErrorMessage("There was an error with an obligation rule: " + e.getMessage());
+    		}
+    	}
+    	
+    	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) throws Exception {
     		// Conditions
     		if (condition_fluents != null) {
     			Iterator<FluentCondition> iter2 = condition_fluents.iterator();
     			while (iter2.hasNext()) {
     				FluentCondition cond = iter2.next();
     				
-    				log("Condition: +/-?" + cond.fluent);
-    				
     				if (cond.sign) {
-    					r.condition(_getFluent(cond.fluent), cond.args);
+    					r.condition(_getInertialFluent(cond.fluent), cond.args);
     				} else {
-    					r.condition(false, _getFluent(cond.fluent), cond.args);
+    					r.condition(false, _getInertialFluent(cond.fluent), cond.args);
     				}
     			}
     		}
@@ -317,19 +338,17 @@ public class InstALParser extends Parser {
     		return r;
     	}
     	
-    	protected Rule _addRuleResultFluents(Rule r, ArrayList<FluentCondition> result_fluents) {
+    	protected Rule _addRuleResultFluents(Rule r, ArrayList<FluentCondition> result_fluents) throws Exception {
     		// Results
     		if (result_fluents != null) {
     			Iterator<FluentCondition> iter = result_fluents.iterator();
     			while (iter.hasNext()) {
     				FluentCondition f_v = iter.next();
     				
-    				log("Fluent Result: " + f_v.fluent);
-    				
     				if (f_v.args == null) {
-    					r.result(_getFluent(f_v.fluent));
+    					r.result(_getInertialFluent(f_v.fluent));
     				} else {
-    					r.result(_getFluent(f_v.fluent), f_v.args);
+    					r.result(_getInertialFluent(f_v.fluent), f_v.args);
     				}
     			}
     		}
@@ -337,14 +356,12 @@ public class InstALParser extends Parser {
     		return r;
     	}
     	
-    	protected Rule _addRuleResultEvents(Rule r, ArrayList<EventWithVariables> result_events) {
+    	protected Rule _addRuleResultEvents(Rule r, ArrayList<EventWithVariables> result_events) throws Exception {
     		// Results
     		if (result_events != null) {
     			Iterator<EventWithVariables> iter = result_events.iterator();
     			while (iter.hasNext()) {
     				EventWithVariables e_v = iter.next();
-    				
-    				log("Event Result: " + e_v.name);
     				
     				if (e_v.args == null) {
     					r.result(_getEvent(e_v.name));
@@ -358,40 +375,40 @@ public class InstALParser extends Parser {
     	}
     	
     	// Utility
-    	protected Type _getType(String name) {
+    	protected Type _getType(String name) throws Exception {
     		if (_typeMap.containsKey(name)) {
     			return _typeMap.get(name);
     		} else {
     			emitErrorMessage("Type '" + name + "' is undefined");
-    			return null;
+    			throw new Exception("Type '" + name + "' is undefined");
     		}
     	}
     	
-    	protected uk.ac.bath.cs.agents.instal.Event _getEvent(String name) {
+    	protected uk.ac.bath.cs.agents.instal.Event _getEvent(String name) throws Exception {
     		if (_eventMap.containsKey(name)) {
     			return _eventMap.get(name);
     		} else {
     			emitErrorMessage("Event '" + name + "' is undefined");
-    			return null;
+    			throw new Exception("Event '" + name + "' is undefined");
     		}
     	}
     	
-    	protected Fluent _getFluent(String name) {
-    		if(_fluentMap.containsKey(name)) {
-    			return _fluentMap.get(name);
+    	protected Fluent _getInertialFluent(String name) throws Exception {
+    		if(_inertialFluentMap.containsKey(name)) {
+    			return _inertialFluentMap.get(name);
     		} else {
     			emitErrorMessage("Fluent '" + name + "' is undefined");
-    			return null;
+    			throw new Exception("Fluent '" + name + "' is undefined");
     		}
     	}
     	
-    	protected boolean _checkFluentsExist(ArrayList<FluentCondition> fluents) {
+    	protected boolean _checkInertialFluentsExist(ArrayList<FluentCondition> fluents) throws Exception {
     		if (fluents != null) {
     			Iterator<FluentCondition> iter = fluents.iterator();
     			while(iter.hasNext()) {
     				FluentCondition f = iter.next();
     				
-    				if (_getFluent(f.fluent) == null) {
+    				if (_getInertialFluent(f.fluent) == null) {
     					return false;
     				}
     			}
@@ -450,7 +467,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "instal_specification"
-    // InstAL.g:389:1: instal_specification : institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF ;
+    // InstAL.g:407:1: instal_specification : institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF ;
     public final InstALParser.instal_specification_return instal_specification() throws RecognitionException {
         InstALParser.instal_specification_return retval = new InstALParser.instal_specification_return();
         retval.start = input.LT(1);
@@ -472,8 +489,8 @@ public class InstALParser extends Parser {
         CommonTree EOF6_tree=null;
 
         try {
-            // InstAL.g:390:2: ( institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF )
-            // InstAL.g:391:3: institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF
+            // InstAL.g:408:2: ( institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF )
+            // InstAL.g:409:3: institution_decl ( constituent_decl | LINE_COMMENT )* ( initially_decl | LINE_COMMENT )* EOF
             {
             root_0 = (CommonTree)adaptor.nil();
 
@@ -484,7 +501,7 @@ public class InstALParser extends Parser {
 
             adaptor.addChild(root_0, institution_decl1.getTree());
              _setInsitutionName((institution_decl1!=null?institution_decl1.name:null)); 
-            // InstAL.g:392:3: ( constituent_decl | LINE_COMMENT )*
+            // InstAL.g:410:3: ( constituent_decl | LINE_COMMENT )*
             loop1:
             do {
                 int alt1=3;
@@ -493,14 +510,14 @@ public class InstALParser extends Parser {
                 if ( (LA1_0==LINE_COMMENT) ) {
                     alt1=2;
                 }
-                else if ( ((LA1_0>=LITERAL && LA1_0<=KEY_TYPE)||(LA1_0>=KEY_NONINERTIAL && LA1_0<=KEY_FLUENT)||LA1_0==KEY_OBLIGATION||(LA1_0>=34 && LA1_0<=37)||LA1_0==39) ) {
+                else if ( ((LA1_0>=LITERAL && LA1_0<=KEY_TYPE)||(LA1_0>=EVENT_KEY_CREATE && LA1_0<=KEY_FLUENT)||LA1_0==KEY_OBLIGATION||(LA1_0>=34 && LA1_0<=36)||LA1_0==38) ) {
                     alt1=1;
                 }
 
 
                 switch (alt1) {
             	case 1 :
-            	    // InstAL.g:392:5: constituent_decl
+            	    // InstAL.g:410:5: constituent_decl
             	    {
             	    pushFollow(FOLLOW_constituent_decl_in_instal_specification69);
             	    constituent_decl2=constituent_decl();
@@ -512,7 +529,7 @@ public class InstALParser extends Parser {
             	    }
             	    break;
             	case 2 :
-            	    // InstAL.g:392:24: LINE_COMMENT
+            	    // InstAL.g:410:24: LINE_COMMENT
             	    {
             	    LINE_COMMENT3=(Token)match(input,LINE_COMMENT,FOLLOW_LINE_COMMENT_in_instal_specification73); 
             	    LINE_COMMENT3_tree = (CommonTree)adaptor.create(LINE_COMMENT3);
@@ -527,7 +544,7 @@ public class InstALParser extends Parser {
                 }
             } while (true);
 
-            // InstAL.g:393:3: ( initially_decl | LINE_COMMENT )*
+            // InstAL.g:411:3: ( initially_decl | LINE_COMMENT )*
             loop2:
             do {
                 int alt2=3;
@@ -543,7 +560,7 @@ public class InstALParser extends Parser {
 
                 switch (alt2) {
             	case 1 :
-            	    // InstAL.g:393:5: initially_decl
+            	    // InstAL.g:411:5: initially_decl
             	    {
             	    pushFollow(FOLLOW_initially_decl_in_instal_specification82);
             	    initially_decl4=initially_decl();
@@ -555,7 +572,7 @@ public class InstALParser extends Parser {
             	    }
             	    break;
             	case 2 :
-            	    // InstAL.g:393:24: LINE_COMMENT
+            	    // InstAL.g:411:24: LINE_COMMENT
             	    {
             	    LINE_COMMENT5=(Token)match(input,LINE_COMMENT,FOLLOW_LINE_COMMENT_in_instal_specification88); 
             	    LINE_COMMENT5_tree = (CommonTree)adaptor.create(LINE_COMMENT5);
@@ -574,7 +591,6 @@ public class InstALParser extends Parser {
             EOF6_tree = (CommonTree)adaptor.create(EOF6);
             adaptor.addChild(root_0, EOF6_tree);
 
-             outputASP(); 
 
             }
 
@@ -603,7 +619,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "institution_decl"
-    // InstAL.g:397:1: institution_decl returns [String name] : KEY_INST institution_name END ;
+    // InstAL.g:415:1: institution_decl returns [String name] : KEY_INST institution_name END ;
     public final InstALParser.institution_decl_return institution_decl() throws RecognitionException {
         InstALParser.institution_decl_return retval = new InstALParser.institution_decl_return();
         retval.start = input.LT(1);
@@ -619,22 +635,22 @@ public class InstALParser extends Parser {
         CommonTree END9_tree=null;
 
         try {
-            // InstAL.g:398:2: ( KEY_INST institution_name END )
-            // InstAL.g:398:4: KEY_INST institution_name END
+            // InstAL.g:416:2: ( KEY_INST institution_name END )
+            // InstAL.g:416:4: KEY_INST institution_name END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_INST7=(Token)match(input,KEY_INST,FOLLOW_KEY_INST_in_institution_decl119); 
+            KEY_INST7=(Token)match(input,KEY_INST,FOLLOW_KEY_INST_in_institution_decl112); 
             KEY_INST7_tree = (CommonTree)adaptor.create(KEY_INST7);
             adaptor.addChild(root_0, KEY_INST7_tree);
 
-            pushFollow(FOLLOW_institution_name_in_institution_decl121);
+            pushFollow(FOLLOW_institution_name_in_institution_decl114);
             institution_name8=institution_name();
 
             state._fsp--;
 
             adaptor.addChild(root_0, institution_name8.getTree());
-            END9=(Token)match(input,END,FOLLOW_END_in_institution_decl123); 
+            END9=(Token)match(input,END,FOLLOW_END_in_institution_decl116); 
             END9_tree = (CommonTree)adaptor.create(END9);
             adaptor.addChild(root_0, END9_tree);
 
@@ -666,7 +682,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "institution_name"
-    // InstAL.g:401:1: institution_name : LITERAL ;
+    // InstAL.g:419:1: institution_name : LITERAL ;
     public final InstALParser.institution_name_return institution_name() throws RecognitionException {
         InstALParser.institution_name_return retval = new InstALParser.institution_name_return();
         retval.start = input.LT(1);
@@ -678,12 +694,12 @@ public class InstALParser extends Parser {
         CommonTree LITERAL10_tree=null;
 
         try {
-            // InstAL.g:402:2: ( LITERAL )
-            // InstAL.g:402:5: LITERAL
+            // InstAL.g:420:2: ( LITERAL )
+            // InstAL.g:420:5: LITERAL
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LITERAL10=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_institution_name138); 
+            LITERAL10=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_institution_name131); 
             LITERAL10_tree = (CommonTree)adaptor.create(LITERAL10);
             adaptor.addChild(root_0, LITERAL10_tree);
 
@@ -714,7 +730,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "constituent_decl"
-    // InstAL.g:404:1: constituent_decl : ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule );
+    // InstAL.g:422:1: constituent_decl : ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule );
     public final InstALParser.constituent_decl_return constituent_decl() throws RecognitionException {
         InstALParser.constituent_decl_return retval = new InstALParser.constituent_decl_return();
         retval.start = input.LT(1);
@@ -736,16 +752,16 @@ public class InstALParser extends Parser {
 
 
         try {
-            // InstAL.g:405:2: ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule )
+            // InstAL.g:423:2: ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule )
             int alt3=6;
             alt3 = dfa3.predict(input);
             switch (alt3) {
                 case 1 :
-                    // InstAL.g:405:4: type_decl
+                    // InstAL.g:423:4: type_decl
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_type_decl_in_constituent_decl148);
+                    pushFollow(FOLLOW_type_decl_in_constituent_decl141);
                     type_decl11=type_decl();
 
                     state._fsp--;
@@ -755,11 +771,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:406:5: event_decl
+                    // InstAL.g:424:5: event_decl
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_event_decl_in_constituent_decl154);
+                    pushFollow(FOLLOW_event_decl_in_constituent_decl147);
                     event_decl12=event_decl();
 
                     state._fsp--;
@@ -769,11 +785,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:407:5: fluent_decl
+                    // InstAL.g:425:5: fluent_decl
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_fluent_decl_in_constituent_decl160);
+                    pushFollow(FOLLOW_fluent_decl_in_constituent_decl153);
                     fluent_decl13=fluent_decl();
 
                     state._fsp--;
@@ -783,11 +799,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 4 :
-                    // InstAL.g:408:4: obligation_decl
+                    // InstAL.g:426:4: obligation_decl
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_obligation_decl_in_constituent_decl165);
+                    pushFollow(FOLLOW_obligation_decl_in_constituent_decl158);
                     obligation_decl14=obligation_decl();
 
                     state._fsp--;
@@ -797,11 +813,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 5 :
-                    // InstAL.g:409:5: generates_rule
+                    // InstAL.g:427:5: generates_rule
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_generates_rule_in_constituent_decl172);
+                    pushFollow(FOLLOW_generates_rule_in_constituent_decl165);
                     generates_rule15=generates_rule();
 
                     state._fsp--;
@@ -811,11 +827,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 6 :
-                    // InstAL.g:410:5: consequence_rule
+                    // InstAL.g:428:5: consequence_rule
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_consequence_rule_in_constituent_decl178);
+                    pushFollow(FOLLOW_consequence_rule_in_constituent_decl171);
                     consequence_rule16=consequence_rule();
 
                     state._fsp--;
@@ -850,7 +866,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "type_decl"
-    // InstAL.g:415:1: type_decl : KEY_TYPE type_name END ;
+    // InstAL.g:433:1: type_decl : KEY_TYPE type_name END ;
     public final InstALParser.type_decl_return type_decl() throws RecognitionException {
         InstALParser.type_decl_return retval = new InstALParser.type_decl_return();
         retval.start = input.LT(1);
@@ -866,22 +882,22 @@ public class InstALParser extends Parser {
         CommonTree END19_tree=null;
 
         try {
-            // InstAL.g:416:2: ( KEY_TYPE type_name END )
-            // InstAL.g:416:4: KEY_TYPE type_name END
+            // InstAL.g:434:2: ( KEY_TYPE type_name END )
+            // InstAL.g:434:4: KEY_TYPE type_name END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_TYPE17=(Token)match(input,KEY_TYPE,FOLLOW_KEY_TYPE_in_type_decl192); 
+            KEY_TYPE17=(Token)match(input,KEY_TYPE,FOLLOW_KEY_TYPE_in_type_decl185); 
             KEY_TYPE17_tree = (CommonTree)adaptor.create(KEY_TYPE17);
             adaptor.addChild(root_0, KEY_TYPE17_tree);
 
-            pushFollow(FOLLOW_type_name_in_type_decl194);
+            pushFollow(FOLLOW_type_name_in_type_decl187);
             type_name18=type_name();
 
             state._fsp--;
 
             adaptor.addChild(root_0, type_name18.getTree());
-            END19=(Token)match(input,END,FOLLOW_END_in_type_decl196); 
+            END19=(Token)match(input,END,FOLLOW_END_in_type_decl189); 
             END19_tree = (CommonTree)adaptor.create(END19);
             adaptor.addChild(root_0, END19_tree);
 
@@ -914,7 +930,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "type_name"
-    // InstAL.g:419:1: type_name returns [String result] : TYPE ;
+    // InstAL.g:437:1: type_name returns [String result] : TYPE ;
     public final InstALParser.type_name_return type_name() throws RecognitionException {
         InstALParser.type_name_return retval = new InstALParser.type_name_return();
         retval.start = input.LT(1);
@@ -926,12 +942,12 @@ public class InstALParser extends Parser {
         CommonTree TYPE20_tree=null;
 
         try {
-            // InstAL.g:420:2: ( TYPE )
-            // InstAL.g:420:4: TYPE
+            // InstAL.g:438:2: ( TYPE )
+            // InstAL.g:438:4: TYPE
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            TYPE20=(Token)match(input,TYPE,FOLLOW_TYPE_in_type_name213); 
+            TYPE20=(Token)match(input,TYPE,FOLLOW_TYPE_in_type_name206); 
             TYPE20_tree = (CommonTree)adaptor.create(TYPE20);
             adaptor.addChild(root_0, TYPE20_tree);
 
@@ -963,7 +979,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_decl"
-    // InstAL.g:424:1: event_decl : ( extended_event_decl | standard_event_decl ) END ;
+    // InstAL.g:442:1: event_decl : ( extended_event_decl | standard_event_decl ) END ;
     public final InstALParser.event_decl_return event_decl() throws RecognitionException {
         InstALParser.event_decl_return retval = new InstALParser.event_decl_return();
         retval.start = input.LT(1);
@@ -979,16 +995,16 @@ public class InstALParser extends Parser {
         CommonTree END23_tree=null;
 
         try {
-            // InstAL.g:425:2: ( ( extended_event_decl | standard_event_decl ) END )
-            // InstAL.g:426:2: ( extended_event_decl | standard_event_decl ) END
+            // InstAL.g:443:2: ( ( extended_event_decl | standard_event_decl ) END )
+            // InstAL.g:444:2: ( extended_event_decl | standard_event_decl ) END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            // InstAL.g:426:2: ( extended_event_decl | standard_event_decl )
+            // InstAL.g:444:2: ( extended_event_decl | standard_event_decl )
             int alt4=2;
             int LA4_0 = input.LA(1);
 
-            if ( ((LA4_0>=34 && LA4_0<=37)) ) {
+            if ( (LA4_0==EVENT_KEY_CREATE||(LA4_0>=34 && LA4_0<=36)) ) {
                 int LA4_1 = input.LA(2);
 
                 if ( (LA4_1==KEY_EVENT) ) {
@@ -998,20 +1014,42 @@ public class InstALParser extends Parser {
                         int LA4_3 = input.LA(4);
 
                         if ( (LA4_3==LPAR) ) {
-                            int LA4_4 = input.LA(5);
+                            switch ( input.LA(5) ) {
+                            case TYPE:
+                                {
+                                int LA4_6 = input.LA(6);
 
-                            if ( (LA4_4==VARIABLE) ) {
+                                if ( (LA4_6==39) ) {
+                                    alt4=1;
+                                }
+                                else if ( (LA4_6==RPAR||LA4_6==37) ) {
+                                    alt4=2;
+                                }
+                                else {
+                                    NoViableAltException nvae =
+                                        new NoViableAltException("", 4, 6, input);
+
+                                    throw nvae;
+                                }
+                                }
+                                break;
+                            case LITERAL:
+                                {
                                 alt4=1;
-                            }
-                            else if ( (LA4_4==TYPE) ) {
+                                }
+                                break;
+                            case RPAR:
+                                {
                                 alt4=2;
-                            }
-                            else {
+                                }
+                                break;
+                            default:
                                 NoViableAltException nvae =
                                     new NoViableAltException("", 4, 4, input);
 
                                 throw nvae;
                             }
+
                         }
                         else if ( (LA4_3==END) ) {
                             alt4=2;
@@ -1045,9 +1083,9 @@ public class InstALParser extends Parser {
             }
             switch (alt4) {
                 case 1 :
-                    // InstAL.g:426:4: extended_event_decl
+                    // InstAL.g:444:4: extended_event_decl
                     {
-                    pushFollow(FOLLOW_extended_event_decl_in_event_decl233);
+                    pushFollow(FOLLOW_extended_event_decl_in_event_decl226);
                     extended_event_decl21=extended_event_decl();
 
                     state._fsp--;
@@ -1058,9 +1096,9 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:427:5: standard_event_decl
+                    // InstAL.g:445:5: standard_event_decl
                     {
-                    pushFollow(FOLLOW_standard_event_decl_in_event_decl242);
+                    pushFollow(FOLLOW_standard_event_decl_in_event_decl235);
                     standard_event_decl22=standard_event_decl();
 
                     state._fsp--;
@@ -1073,7 +1111,7 @@ public class InstALParser extends Parser {
 
             }
 
-            END23=(Token)match(input,END,FOLLOW_END_in_event_decl251); 
+            END23=(Token)match(input,END,FOLLOW_END_in_event_decl244); 
             END23_tree = (CommonTree)adaptor.create(END23);
             adaptor.addChild(root_0, END23_tree);
 
@@ -1107,7 +1145,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "standard_event_decl"
-    // InstAL.g:431:1: standard_event_decl returns [String type, String name, ArrayList<String> types] : event_description ( type_arguments )? ;
+    // InstAL.g:449:1: standard_event_decl returns [String type, String name, ArrayList<String> types] : event_description ( type_arguments )? ;
     public final InstALParser.standard_event_decl_return standard_event_decl() throws RecognitionException {
         InstALParser.standard_event_decl_return retval = new InstALParser.standard_event_decl_return();
         retval.start = input.LT(1);
@@ -1121,18 +1159,18 @@ public class InstALParser extends Parser {
 
 
         try {
-            // InstAL.g:432:2: ( event_description ( type_arguments )? )
-            // InstAL.g:432:4: event_description ( type_arguments )?
+            // InstAL.g:450:2: ( event_description ( type_arguments )? )
+            // InstAL.g:450:4: event_description ( type_arguments )?
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_description_in_standard_event_decl267);
+            pushFollow(FOLLOW_event_description_in_standard_event_decl260);
             event_description24=event_description();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_description24.getTree());
-            // InstAL.g:432:22: ( type_arguments )?
+            // InstAL.g:450:22: ( type_arguments )?
             int alt5=2;
             int LA5_0 = input.LA(1);
 
@@ -1141,9 +1179,9 @@ public class InstALParser extends Parser {
             }
             switch (alt5) {
                 case 1 :
-                    // InstAL.g:432:22: type_arguments
+                    // InstAL.g:450:22: type_arguments
                     {
-                    pushFollow(FOLLOW_type_arguments_in_standard_event_decl269);
+                    pushFollow(FOLLOW_type_arguments_in_standard_event_decl262);
                     type_arguments25=type_arguments();
 
                     state._fsp--;
@@ -1185,7 +1223,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "extended_event_decl"
-    // InstAL.g:435:1: extended_event_decl returns [String type, String name] : event_description variable_type_arguments KEY_WITH variable_constraints ;
+    // InstAL.g:453:1: extended_event_decl returns [String type, String name] : event_description variable_type_arguments KEY_WITH variable_constraints ;
     public final InstALParser.extended_event_decl_return extended_event_decl() throws RecognitionException {
         InstALParser.extended_event_decl_return retval = new InstALParser.extended_event_decl_return();
         retval.start = input.LT(1);
@@ -1203,28 +1241,28 @@ public class InstALParser extends Parser {
         CommonTree KEY_WITH28_tree=null;
 
         try {
-            // InstAL.g:436:2: ( event_description variable_type_arguments KEY_WITH variable_constraints )
-            // InstAL.g:436:4: event_description variable_type_arguments KEY_WITH variable_constraints
+            // InstAL.g:454:2: ( event_description variable_type_arguments KEY_WITH variable_constraints )
+            // InstAL.g:454:4: event_description variable_type_arguments KEY_WITH variable_constraints
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_description_in_extended_event_decl288);
+            pushFollow(FOLLOW_event_description_in_extended_event_decl281);
             event_description26=event_description();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_description26.getTree());
-            pushFollow(FOLLOW_variable_type_arguments_in_extended_event_decl290);
+            pushFollow(FOLLOW_variable_type_arguments_in_extended_event_decl283);
             variable_type_arguments27=variable_type_arguments();
 
             state._fsp--;
 
             adaptor.addChild(root_0, variable_type_arguments27.getTree());
-            KEY_WITH28=(Token)match(input,KEY_WITH,FOLLOW_KEY_WITH_in_extended_event_decl292); 
+            KEY_WITH28=(Token)match(input,KEY_WITH,FOLLOW_KEY_WITH_in_extended_event_decl285); 
             KEY_WITH28_tree = (CommonTree)adaptor.create(KEY_WITH28);
             adaptor.addChild(root_0, KEY_WITH28_tree);
 
-            pushFollow(FOLLOW_variable_constraints_in_extended_event_decl294);
+            pushFollow(FOLLOW_variable_constraints_in_extended_event_decl287);
             variable_constraints29=variable_constraints();
 
             state._fsp--;
@@ -1260,7 +1298,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_description"
-    // InstAL.g:439:1: event_description returns [String type, String name] : event_type KEY_EVENT event_name ;
+    // InstAL.g:457:1: event_description returns [String type, String name] : event_type KEY_EVENT event_name ;
     public final InstALParser.event_description_return event_description() throws RecognitionException {
         InstALParser.event_description_return retval = new InstALParser.event_description_return();
         retval.start = input.LT(1);
@@ -1276,22 +1314,22 @@ public class InstALParser extends Parser {
         CommonTree KEY_EVENT31_tree=null;
 
         try {
-            // InstAL.g:440:2: ( event_type KEY_EVENT event_name )
-            // InstAL.g:440:4: event_type KEY_EVENT event_name
+            // InstAL.g:458:2: ( event_type KEY_EVENT event_name )
+            // InstAL.g:458:4: event_type KEY_EVENT event_name
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_type_in_event_description312);
+            pushFollow(FOLLOW_event_type_in_event_description305);
             event_type30=event_type();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_type30.getTree());
-            KEY_EVENT31=(Token)match(input,KEY_EVENT,FOLLOW_KEY_EVENT_in_event_description314); 
+            KEY_EVENT31=(Token)match(input,KEY_EVENT,FOLLOW_KEY_EVENT_in_event_description307); 
             KEY_EVENT31_tree = (CommonTree)adaptor.create(KEY_EVENT31);
             adaptor.addChild(root_0, KEY_EVENT31_tree);
 
-            pushFollow(FOLLOW_event_name_in_event_description316);
+            pushFollow(FOLLOW_event_name_in_event_description309);
             event_name32=event_name();
 
             state._fsp--;
@@ -1325,7 +1363,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_name"
-    // InstAL.g:443:1: event_name : LITERAL ;
+    // InstAL.g:461:1: event_name : LITERAL ;
     public final InstALParser.event_name_return event_name() throws RecognitionException {
         InstALParser.event_name_return retval = new InstALParser.event_name_return();
         retval.start = input.LT(1);
@@ -1337,12 +1375,12 @@ public class InstALParser extends Parser {
         CommonTree LITERAL33_tree=null;
 
         try {
-            // InstAL.g:444:2: ( LITERAL )
-            // InstAL.g:444:4: LITERAL
+            // InstAL.g:462:2: ( LITERAL )
+            // InstAL.g:462:4: LITERAL
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LITERAL33=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_event_name330); 
+            LITERAL33=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_event_name323); 
             LITERAL33_tree = (CommonTree)adaptor.create(LITERAL33);
             adaptor.addChild(root_0, LITERAL33_tree);
 
@@ -1373,7 +1411,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_type"
-    // InstAL.g:446:1: event_type : ( 'exogenous' | 'inst' | 'creation' | 'violation' ) ;
+    // InstAL.g:464:1: event_type : ( 'exogenous' | 'inst' | EVENT_KEY_CREATE | 'violation' ) ;
     public final InstALParser.event_type_return event_type() throws RecognitionException {
         InstALParser.event_type_return retval = new InstALParser.event_type_return();
         retval.start = input.LT(1);
@@ -1385,13 +1423,13 @@ public class InstALParser extends Parser {
         CommonTree set34_tree=null;
 
         try {
-            // InstAL.g:447:2: ( ( 'exogenous' | 'inst' | 'creation' | 'violation' ) )
-            // InstAL.g:447:4: ( 'exogenous' | 'inst' | 'creation' | 'violation' )
+            // InstAL.g:465:2: ( ( 'exogenous' | 'inst' | EVENT_KEY_CREATE | 'violation' ) )
+            // InstAL.g:465:4: ( 'exogenous' | 'inst' | EVENT_KEY_CREATE | 'violation' )
             {
             root_0 = (CommonTree)adaptor.nil();
 
             set34=(Token)input.LT(1);
-            if ( (input.LA(1)>=34 && input.LA(1)<=37) ) {
+            if ( input.LA(1)==EVENT_KEY_CREATE||(input.LA(1)>=34 && input.LA(1)<=36) ) {
                 input.consume();
                 adaptor.addChild(root_0, (CommonTree)adaptor.create(set34));
                 state.errorRecovery=false;
@@ -1428,7 +1466,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_constraints"
-    // InstAL.g:449:1: variable_constraints : variable_constraint ( ',' variable_constraint )* ;
+    // InstAL.g:467:1: variable_constraints : variable_constraint ( ',' variable_constraint )* ;
     public final InstALParser.variable_constraints_return variable_constraints() throws RecognitionException {
         InstALParser.variable_constraints_return retval = new InstALParser.variable_constraints_return();
         retval.start = input.LT(1);
@@ -1444,37 +1482,37 @@ public class InstALParser extends Parser {
         CommonTree char_literal36_tree=null;
 
         try {
-            // InstAL.g:450:2: ( variable_constraint ( ',' variable_constraint )* )
-            // InstAL.g:450:4: variable_constraint ( ',' variable_constraint )*
+            // InstAL.g:468:2: ( variable_constraint ( ',' variable_constraint )* )
+            // InstAL.g:468:4: variable_constraint ( ',' variable_constraint )*
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_variable_constraint_in_variable_constraints366);
+            pushFollow(FOLLOW_variable_constraint_in_variable_constraints359);
             variable_constraint35=variable_constraint();
 
             state._fsp--;
 
             adaptor.addChild(root_0, variable_constraint35.getTree());
-            // InstAL.g:450:24: ( ',' variable_constraint )*
+            // InstAL.g:468:24: ( ',' variable_constraint )*
             loop6:
             do {
                 int alt6=2;
                 int LA6_0 = input.LA(1);
 
-                if ( (LA6_0==38) ) {
+                if ( (LA6_0==37) ) {
                     alt6=1;
                 }
 
 
                 switch (alt6) {
             	case 1 :
-            	    // InstAL.g:450:26: ',' variable_constraint
+            	    // InstAL.g:468:26: ',' variable_constraint
             	    {
-            	    char_literal36=(Token)match(input,38,FOLLOW_38_in_variable_constraints370); 
+            	    char_literal36=(Token)match(input,37,FOLLOW_37_in_variable_constraints363); 
             	    char_literal36_tree = (CommonTree)adaptor.create(char_literal36);
             	    adaptor.addChild(root_0, char_literal36_tree);
 
-            	    pushFollow(FOLLOW_variable_constraint_in_variable_constraints372);
+            	    pushFollow(FOLLOW_variable_constraint_in_variable_constraints365);
             	    variable_constraint37=variable_constraint();
 
             	    state._fsp--;
@@ -1516,7 +1554,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_constraint"
-    // InstAL.g:452:1: variable_constraint : variable_name operation variable_name ;
+    // InstAL.g:470:1: variable_constraint : variable_name operation variable_name ;
     public final InstALParser.variable_constraint_return variable_constraint() throws RecognitionException {
         InstALParser.variable_constraint_return retval = new InstALParser.variable_constraint_return();
         retval.start = input.LT(1);
@@ -1532,24 +1570,24 @@ public class InstALParser extends Parser {
 
 
         try {
-            // InstAL.g:453:2: ( variable_name operation variable_name )
-            // InstAL.g:453:4: variable_name operation variable_name
+            // InstAL.g:471:2: ( variable_name operation variable_name )
+            // InstAL.g:471:4: variable_name operation variable_name
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_variable_name_in_variable_constraint385);
+            pushFollow(FOLLOW_variable_name_in_variable_constraint378);
             variable_name38=variable_name();
 
             state._fsp--;
 
             adaptor.addChild(root_0, variable_name38.getTree());
-            pushFollow(FOLLOW_operation_in_variable_constraint387);
+            pushFollow(FOLLOW_operation_in_variable_constraint380);
             operation39=operation();
 
             state._fsp--;
 
             adaptor.addChild(root_0, operation39.getTree());
-            pushFollow(FOLLOW_variable_name_in_variable_constraint389);
+            pushFollow(FOLLOW_variable_name_in_variable_constraint382);
             variable_name40=variable_name();
 
             state._fsp--;
@@ -1582,7 +1620,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluent_decl"
-    // InstAL.g:456:1: fluent_decl : ( noninertial_fluent_decl | standard_fluent_decl ) END ;
+    // InstAL.g:474:1: fluent_decl : ( noninertial_fluent_decl | standard_fluent_decl ) END ;
     public final InstALParser.fluent_decl_return fluent_decl() throws RecognitionException {
         InstALParser.fluent_decl_return retval = new InstALParser.fluent_decl_return();
         retval.start = input.LT(1);
@@ -1598,12 +1636,12 @@ public class InstALParser extends Parser {
         CommonTree END43_tree=null;
 
         try {
-            // InstAL.g:457:2: ( ( noninertial_fluent_decl | standard_fluent_decl ) END )
-            // InstAL.g:457:4: ( noninertial_fluent_decl | standard_fluent_decl ) END
+            // InstAL.g:475:2: ( ( noninertial_fluent_decl | standard_fluent_decl ) END )
+            // InstAL.g:475:4: ( noninertial_fluent_decl | standard_fluent_decl ) END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            // InstAL.g:457:4: ( noninertial_fluent_decl | standard_fluent_decl )
+            // InstAL.g:475:4: ( noninertial_fluent_decl | standard_fluent_decl )
             int alt7=2;
             int LA7_0 = input.LA(1);
 
@@ -1621,9 +1659,9 @@ public class InstALParser extends Parser {
             }
             switch (alt7) {
                 case 1 :
-                    // InstAL.g:458:4: noninertial_fluent_decl
+                    // InstAL.g:476:4: noninertial_fluent_decl
                     {
-                    pushFollow(FOLLOW_noninertial_fluent_decl_in_fluent_decl405);
+                    pushFollow(FOLLOW_noninertial_fluent_decl_in_fluent_decl398);
                     noninertial_fluent_decl41=noninertial_fluent_decl();
 
                     state._fsp--;
@@ -1634,9 +1672,9 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:459:5: standard_fluent_decl
+                    // InstAL.g:477:5: standard_fluent_decl
                     {
-                    pushFollow(FOLLOW_standard_fluent_decl_in_fluent_decl413);
+                    pushFollow(FOLLOW_standard_fluent_decl_in_fluent_decl406);
                     standard_fluent_decl42=standard_fluent_decl();
 
                     state._fsp--;
@@ -1649,7 +1687,7 @@ public class InstALParser extends Parser {
 
             }
 
-            END43=(Token)match(input,END,FOLLOW_END_in_fluent_decl421); 
+            END43=(Token)match(input,END,FOLLOW_END_in_fluent_decl414); 
             END43_tree = (CommonTree)adaptor.create(END43);
             adaptor.addChild(root_0, END43_tree);
 
@@ -1683,7 +1721,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "noninertial_fluent_decl"
-    // InstAL.g:463:1: noninertial_fluent_decl returns [String type, String name, ArrayList<String> args] : KEY_NONINERTIAL standard_fluent_decl ;
+    // InstAL.g:481:1: noninertial_fluent_decl returns [String type, String name, ArrayList<String> args] : KEY_NONINERTIAL standard_fluent_decl ;
     public final InstALParser.noninertial_fluent_decl_return noninertial_fluent_decl() throws RecognitionException {
         InstALParser.noninertial_fluent_decl_return retval = new InstALParser.noninertial_fluent_decl_return();
         retval.start = input.LT(1);
@@ -1697,16 +1735,16 @@ public class InstALParser extends Parser {
         CommonTree KEY_NONINERTIAL44_tree=null;
 
         try {
-            // InstAL.g:464:2: ( KEY_NONINERTIAL standard_fluent_decl )
-            // InstAL.g:464:4: KEY_NONINERTIAL standard_fluent_decl
+            // InstAL.g:482:2: ( KEY_NONINERTIAL standard_fluent_decl )
+            // InstAL.g:482:4: KEY_NONINERTIAL standard_fluent_decl
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_NONINERTIAL44=(Token)match(input,KEY_NONINERTIAL,FOLLOW_KEY_NONINERTIAL_in_noninertial_fluent_decl439); 
+            KEY_NONINERTIAL44=(Token)match(input,KEY_NONINERTIAL,FOLLOW_KEY_NONINERTIAL_in_noninertial_fluent_decl432); 
             KEY_NONINERTIAL44_tree = (CommonTree)adaptor.create(KEY_NONINERTIAL44);
             adaptor.addChild(root_0, KEY_NONINERTIAL44_tree);
 
-            pushFollow(FOLLOW_standard_fluent_decl_in_noninertial_fluent_decl441);
+            pushFollow(FOLLOW_standard_fluent_decl_in_noninertial_fluent_decl434);
             standard_fluent_decl45=standard_fluent_decl();
 
             state._fsp--;
@@ -1743,7 +1781,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "standard_fluent_decl"
-    // InstAL.g:467:1: standard_fluent_decl returns [String type, String name, ArrayList<String> args] : KEY_FLUENT fluent_name ( type_arguments )? ;
+    // InstAL.g:485:1: standard_fluent_decl returns [String type, String name, ArrayList<String> args] : KEY_FLUENT fluent_name ( type_arguments )? ;
     public final InstALParser.standard_fluent_decl_return standard_fluent_decl() throws RecognitionException {
         InstALParser.standard_fluent_decl_return retval = new InstALParser.standard_fluent_decl_return();
         retval.start = input.LT(1);
@@ -1759,22 +1797,22 @@ public class InstALParser extends Parser {
         CommonTree KEY_FLUENT46_tree=null;
 
         try {
-            // InstAL.g:468:2: ( KEY_FLUENT fluent_name ( type_arguments )? )
-            // InstAL.g:468:4: KEY_FLUENT fluent_name ( type_arguments )?
+            // InstAL.g:486:2: ( KEY_FLUENT fluent_name ( type_arguments )? )
+            // InstAL.g:486:4: KEY_FLUENT fluent_name ( type_arguments )?
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_FLUENT46=(Token)match(input,KEY_FLUENT,FOLLOW_KEY_FLUENT_in_standard_fluent_decl459); 
+            KEY_FLUENT46=(Token)match(input,KEY_FLUENT,FOLLOW_KEY_FLUENT_in_standard_fluent_decl452); 
             KEY_FLUENT46_tree = (CommonTree)adaptor.create(KEY_FLUENT46);
             adaptor.addChild(root_0, KEY_FLUENT46_tree);
 
-            pushFollow(FOLLOW_fluent_name_in_standard_fluent_decl461);
+            pushFollow(FOLLOW_fluent_name_in_standard_fluent_decl454);
             fluent_name47=fluent_name();
 
             state._fsp--;
 
             adaptor.addChild(root_0, fluent_name47.getTree());
-            // InstAL.g:468:27: ( type_arguments )?
+            // InstAL.g:486:27: ( type_arguments )?
             int alt8=2;
             int LA8_0 = input.LA(1);
 
@@ -1783,9 +1821,9 @@ public class InstALParser extends Parser {
             }
             switch (alt8) {
                 case 1 :
-                    // InstAL.g:468:27: type_arguments
+                    // InstAL.g:486:27: type_arguments
                     {
-                    pushFollow(FOLLOW_type_arguments_in_standard_fluent_decl463);
+                    pushFollow(FOLLOW_type_arguments_in_standard_fluent_decl456);
                     type_arguments48=type_arguments();
 
                     state._fsp--;
@@ -1825,7 +1863,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluent_name"
-    // InstAL.g:471:1: fluent_name : LITERAL ;
+    // InstAL.g:489:1: fluent_name : LITERAL ;
     public final InstALParser.fluent_name_return fluent_name() throws RecognitionException {
         InstALParser.fluent_name_return retval = new InstALParser.fluent_name_return();
         retval.start = input.LT(1);
@@ -1837,12 +1875,12 @@ public class InstALParser extends Parser {
         CommonTree LITERAL49_tree=null;
 
         try {
-            // InstAL.g:472:2: ( LITERAL )
-            // InstAL.g:472:4: LITERAL
+            // InstAL.g:490:2: ( LITERAL )
+            // InstAL.g:490:4: LITERAL
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LITERAL49=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_fluent_name478); 
+            LITERAL49=(Token)match(input,LITERAL,FOLLOW_LITERAL_in_fluent_name471); 
             LITERAL49_tree = (CommonTree)adaptor.create(LITERAL49);
             adaptor.addChild(root_0, LITERAL49_tree);
 
@@ -1873,7 +1911,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "generates_rule"
-    // InstAL.g:476:1: generates_rule : event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END ;
+    // InstAL.g:494:1: generates_rule : event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END ;
     public final InstALParser.generates_rule_return generates_rule() throws RecognitionException {
         InstALParser.generates_rule_return retval = new InstALParser.generates_rule_return();
         retval.start = input.LT(1);
@@ -1895,28 +1933,28 @@ public class InstALParser extends Parser {
         CommonTree END53_tree=null;
 
         try {
-            // InstAL.g:477:2: ( event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END )
-            // InstAL.g:477:4: event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END
+            // InstAL.g:495:2: ( event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END )
+            // InstAL.g:495:4: event_varient KEY_GENERATES results= events_with_variables ( KEY_IF conditions= fluents_with_variables_with_negation )? END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_varient_in_generates_rule491);
+            pushFollow(FOLLOW_event_varient_in_generates_rule484);
             event_varient50=event_varient();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_varient50.getTree());
-            KEY_GENERATES51=(Token)match(input,KEY_GENERATES,FOLLOW_KEY_GENERATES_in_generates_rule493); 
+            KEY_GENERATES51=(Token)match(input,KEY_GENERATES,FOLLOW_KEY_GENERATES_in_generates_rule486); 
             KEY_GENERATES51_tree = (CommonTree)adaptor.create(KEY_GENERATES51);
             adaptor.addChild(root_0, KEY_GENERATES51_tree);
 
-            pushFollow(FOLLOW_events_with_variables_in_generates_rule497);
+            pushFollow(FOLLOW_events_with_variables_in_generates_rule490);
             results=events_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, results.getTree());
-            // InstAL.g:477:62: ( KEY_IF conditions= fluents_with_variables_with_negation )?
+            // InstAL.g:495:62: ( KEY_IF conditions= fluents_with_variables_with_negation )?
             int alt9=2;
             int LA9_0 = input.LA(1);
 
@@ -1925,13 +1963,13 @@ public class InstALParser extends Parser {
             }
             switch (alt9) {
                 case 1 :
-                    // InstAL.g:477:64: KEY_IF conditions= fluents_with_variables_with_negation
+                    // InstAL.g:495:64: KEY_IF conditions= fluents_with_variables_with_negation
                     {
-                    KEY_IF52=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_generates_rule501); 
+                    KEY_IF52=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_generates_rule494); 
                     KEY_IF52_tree = (CommonTree)adaptor.create(KEY_IF52);
                     adaptor.addChild(root_0, KEY_IF52_tree);
 
-                    pushFollow(FOLLOW_fluents_with_variables_with_negation_in_generates_rule505);
+                    pushFollow(FOLLOW_fluents_with_variables_with_negation_in_generates_rule498);
                     conditions=fluents_with_variables_with_negation();
 
                     state._fsp--;
@@ -1943,7 +1981,7 @@ public class InstALParser extends Parser {
 
             }
 
-            END53=(Token)match(input,END,FOLLOW_END_in_generates_rule510); 
+            END53=(Token)match(input,END,FOLLOW_END_in_generates_rule503); 
             END53_tree = (CommonTree)adaptor.create(END53);
             adaptor.addChild(root_0, END53_tree);
 
@@ -1981,7 +2019,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "events_with_variables"
-    // InstAL.g:480:1: events_with_variables returns [ArrayList<EventWithVariables> events] : event_with_variables ( ',' event_with_variables )* ;
+    // InstAL.g:498:1: events_with_variables returns [ArrayList<EventWithVariables> events] : event_with_variables ( ',' event_with_variables )* ;
     public final InstALParser.events_with_variables_return events_with_variables() throws RecognitionException {
         events_with_variables_stack.push(new events_with_variables_scope());
         InstALParser.events_with_variables_return retval = new InstALParser.events_with_variables_return();
@@ -1999,37 +2037,37 @@ public class InstALParser extends Parser {
 
          ((events_with_variables_scope)events_with_variables_stack.peek()).list = new ArrayList<EventWithVariables>(); 
         try {
-            // InstAL.g:483:2: ( event_with_variables ( ',' event_with_variables )* )
-            // InstAL.g:483:4: event_with_variables ( ',' event_with_variables )*
+            // InstAL.g:501:2: ( event_with_variables ( ',' event_with_variables )* )
+            // InstAL.g:501:4: event_with_variables ( ',' event_with_variables )*
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_with_variables_in_events_with_variables540);
+            pushFollow(FOLLOW_event_with_variables_in_events_with_variables533);
             event_with_variables54=event_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_with_variables54.getTree());
-            // InstAL.g:483:25: ( ',' event_with_variables )*
+            // InstAL.g:501:25: ( ',' event_with_variables )*
             loop10:
             do {
                 int alt10=2;
                 int LA10_0 = input.LA(1);
 
-                if ( (LA10_0==38) ) {
+                if ( (LA10_0==37) ) {
                     alt10=1;
                 }
 
 
                 switch (alt10) {
             	case 1 :
-            	    // InstAL.g:483:27: ',' event_with_variables
+            	    // InstAL.g:501:27: ',' event_with_variables
             	    {
-            	    char_literal55=(Token)match(input,38,FOLLOW_38_in_events_with_variables544); 
+            	    char_literal55=(Token)match(input,37,FOLLOW_37_in_events_with_variables537); 
             	    char_literal55_tree = (CommonTree)adaptor.create(char_literal55);
             	    adaptor.addChild(root_0, char_literal55_tree);
 
-            	    pushFollow(FOLLOW_event_with_variables_in_events_with_variables546);
+            	    pushFollow(FOLLOW_event_with_variables_in_events_with_variables539);
             	    event_with_variables56=event_with_variables();
 
             	    state._fsp--;
@@ -2073,7 +2111,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_with_variables"
-    // InstAL.g:486:1: event_with_variables : event_varient ;
+    // InstAL.g:504:1: event_with_variables : event_varient ;
     public final InstALParser.event_with_variables_return event_with_variables() throws RecognitionException {
         InstALParser.event_with_variables_return retval = new InstALParser.event_with_variables_return();
         retval.start = input.LT(1);
@@ -2085,12 +2123,12 @@ public class InstALParser extends Parser {
 
 
         try {
-            // InstAL.g:487:2: ( event_varient )
-            // InstAL.g:487:4: event_varient
+            // InstAL.g:505:2: ( event_varient )
+            // InstAL.g:505:4: event_varient
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_varient_in_event_with_variables563);
+            pushFollow(FOLLOW_event_varient_in_event_with_variables556);
             event_varient57=event_varient();
 
             state._fsp--;
@@ -2130,7 +2168,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluents_with_variables"
-    // InstAL.g:490:1: fluents_with_variables returns [ArrayList<FluentCondition> fluents] : fluent_with_variables ( ',' fluent_with_variables )* ;
+    // InstAL.g:508:1: fluents_with_variables returns [ArrayList<FluentCondition> fluents] : fluent_with_variables ( ',' fluent_with_variables )* ;
     public final InstALParser.fluents_with_variables_return fluents_with_variables() throws RecognitionException {
         fluents_with_variables_stack.push(new fluents_with_variables_scope());
         InstALParser.fluents_with_variables_return retval = new InstALParser.fluents_with_variables_return();
@@ -2148,37 +2186,37 @@ public class InstALParser extends Parser {
 
          ((fluents_with_variables_scope)fluents_with_variables_stack.peek()).list = new ArrayList<FluentCondition>(); 
         try {
-            // InstAL.g:493:2: ( fluent_with_variables ( ',' fluent_with_variables )* )
-            // InstAL.g:493:4: fluent_with_variables ( ',' fluent_with_variables )*
+            // InstAL.g:511:2: ( fluent_with_variables ( ',' fluent_with_variables )* )
+            // InstAL.g:511:4: fluent_with_variables ( ',' fluent_with_variables )*
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_fluent_with_variables_in_fluents_with_variables591);
+            pushFollow(FOLLOW_fluent_with_variables_in_fluents_with_variables584);
             fluent_with_variables58=fluent_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, fluent_with_variables58.getTree());
-            // InstAL.g:493:26: ( ',' fluent_with_variables )*
+            // InstAL.g:511:26: ( ',' fluent_with_variables )*
             loop11:
             do {
                 int alt11=2;
                 int LA11_0 = input.LA(1);
 
-                if ( (LA11_0==38) ) {
+                if ( (LA11_0==37) ) {
                     alt11=1;
                 }
 
 
                 switch (alt11) {
             	case 1 :
-            	    // InstAL.g:493:28: ',' fluent_with_variables
+            	    // InstAL.g:511:28: ',' fluent_with_variables
             	    {
-            	    char_literal59=(Token)match(input,38,FOLLOW_38_in_fluents_with_variables595); 
+            	    char_literal59=(Token)match(input,37,FOLLOW_37_in_fluents_with_variables588); 
             	    char_literal59_tree = (CommonTree)adaptor.create(char_literal59);
             	    adaptor.addChild(root_0, char_literal59_tree);
 
-            	    pushFollow(FOLLOW_fluent_with_variables_in_fluents_with_variables597);
+            	    pushFollow(FOLLOW_fluent_with_variables_in_fluents_with_variables590);
             	    fluent_with_variables60=fluent_with_variables();
 
             	    state._fsp--;
@@ -2222,7 +2260,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluent_with_variables"
-    // InstAL.g:496:1: fluent_with_variables : fluent_varient ;
+    // InstAL.g:514:1: fluent_with_variables : fluent_varient ;
     public final InstALParser.fluent_with_variables_return fluent_with_variables() throws RecognitionException {
         InstALParser.fluent_with_variables_return retval = new InstALParser.fluent_with_variables_return();
         retval.start = input.LT(1);
@@ -2234,12 +2272,12 @@ public class InstALParser extends Parser {
 
 
         try {
-            // InstAL.g:497:2: ( fluent_varient )
-            // InstAL.g:497:4: fluent_varient
+            // InstAL.g:515:2: ( fluent_varient )
+            // InstAL.g:515:4: fluent_varient
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables615);
+            pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables608);
             fluent_varient61=fluent_varient();
 
             state._fsp--;
@@ -2279,7 +2317,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluents_with_variables_with_negation"
-    // InstAL.g:500:1: fluents_with_variables_with_negation returns [ArrayList<FluentCondition> fluents] : fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )* ;
+    // InstAL.g:518:1: fluents_with_variables_with_negation returns [ArrayList<FluentCondition> fluents] : fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )* ;
     public final InstALParser.fluents_with_variables_with_negation_return fluents_with_variables_with_negation() throws RecognitionException {
         fluents_with_variables_with_negation_stack.push(new fluents_with_variables_with_negation_scope());
         InstALParser.fluents_with_variables_with_negation_return retval = new InstALParser.fluents_with_variables_with_negation_return();
@@ -2297,37 +2335,37 @@ public class InstALParser extends Parser {
 
          ((fluents_with_variables_with_negation_scope)fluents_with_variables_with_negation_stack.peek()).list = new ArrayList<FluentCondition>(); 
         try {
-            // InstAL.g:503:2: ( fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )* )
-            // InstAL.g:503:4: fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )*
+            // InstAL.g:521:2: ( fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )* )
+            // InstAL.g:521:4: fluent_with_variables_with_negation ( ',' fluent_with_variables_with_negation )*
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation643);
+            pushFollow(FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation636);
             fluent_with_variables_with_negation62=fluent_with_variables_with_negation();
 
             state._fsp--;
 
             adaptor.addChild(root_0, fluent_with_variables_with_negation62.getTree());
-            // InstAL.g:503:40: ( ',' fluent_with_variables_with_negation )*
+            // InstAL.g:521:40: ( ',' fluent_with_variables_with_negation )*
             loop12:
             do {
                 int alt12=2;
                 int LA12_0 = input.LA(1);
 
-                if ( (LA12_0==38) ) {
+                if ( (LA12_0==37) ) {
                     alt12=1;
                 }
 
 
                 switch (alt12) {
             	case 1 :
-            	    // InstAL.g:503:42: ',' fluent_with_variables_with_negation
+            	    // InstAL.g:521:42: ',' fluent_with_variables_with_negation
             	    {
-            	    char_literal63=(Token)match(input,38,FOLLOW_38_in_fluents_with_variables_with_negation647); 
+            	    char_literal63=(Token)match(input,37,FOLLOW_37_in_fluents_with_variables_with_negation640); 
             	    char_literal63_tree = (CommonTree)adaptor.create(char_literal63);
             	    adaptor.addChild(root_0, char_literal63_tree);
 
-            	    pushFollow(FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation649);
+            	    pushFollow(FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation642);
             	    fluent_with_variables_with_negation64=fluent_with_variables_with_negation();
 
             	    state._fsp--;
@@ -2371,7 +2409,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluent_with_variables_with_negation"
-    // InstAL.g:506:1: fluent_with_variables_with_negation : ( KEY_NOT fluent_varient | fluent_varient );
+    // InstAL.g:524:1: fluent_with_variables_with_negation : ( KEY_NOT fluent_varient | fluent_varient );
     public final InstALParser.fluent_with_variables_with_negation_return fluent_with_variables_with_negation() throws RecognitionException {
         InstALParser.fluent_with_variables_with_negation_return retval = new InstALParser.fluent_with_variables_with_negation_return();
         retval.start = input.LT(1);
@@ -2387,7 +2425,7 @@ public class InstALParser extends Parser {
         CommonTree KEY_NOT65_tree=null;
 
         try {
-            // InstAL.g:507:2: ( KEY_NOT fluent_varient | fluent_varient )
+            // InstAL.g:525:2: ( KEY_NOT fluent_varient | fluent_varient )
             int alt13=2;
             int LA13_0 = input.LA(1);
 
@@ -2405,15 +2443,15 @@ public class InstALParser extends Parser {
             }
             switch (alt13) {
                 case 1 :
-                    // InstAL.g:507:4: KEY_NOT fluent_varient
+                    // InstAL.g:525:4: KEY_NOT fluent_varient
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    KEY_NOT65=(Token)match(input,KEY_NOT,FOLLOW_KEY_NOT_in_fluent_with_variables_with_negation668); 
+                    KEY_NOT65=(Token)match(input,KEY_NOT,FOLLOW_KEY_NOT_in_fluent_with_variables_with_negation661); 
                     KEY_NOT65_tree = (CommonTree)adaptor.create(KEY_NOT65);
                     adaptor.addChild(root_0, KEY_NOT65_tree);
 
-                    pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables_with_negation670);
+                    pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables_with_negation663);
                     fluent_varient66=fluent_varient();
 
                     state._fsp--;
@@ -2424,11 +2462,11 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:508:4: fluent_varient
+                    // InstAL.g:526:4: fluent_varient
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables_with_negation677);
+                    pushFollow(FOLLOW_fluent_varient_in_fluent_with_variables_with_negation670);
                     fluent_varient67=fluent_varient();
 
                     state._fsp--;
@@ -2466,7 +2504,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "event_varient"
-    // InstAL.g:512:1: event_varient returns [String name, ArrayList<String> args] : ( ( 'viol' LPAR event_name ( variable_arguments )? RPAR ) | ( event_name ( variable_arguments )? ) );
+    // InstAL.g:530:1: event_varient returns [String name, ArrayList<String> args] : ( ( 'viol' LPAR event_name ( variable_arguments )? RPAR ) | ( event_name ( variable_arguments )? ) );
     public final InstALParser.event_varient_return event_varient() throws RecognitionException {
         InstALParser.event_varient_return retval = new InstALParser.event_varient_return();
         retval.start = input.LT(1);
@@ -2490,11 +2528,11 @@ public class InstALParser extends Parser {
         CommonTree RPAR72_tree=null;
 
         try {
-            // InstAL.g:513:2: ( ( 'viol' LPAR event_name ( variable_arguments )? RPAR ) | ( event_name ( variable_arguments )? ) )
+            // InstAL.g:531:2: ( ( 'viol' LPAR event_name ( variable_arguments )? RPAR ) | ( event_name ( variable_arguments )? ) )
             int alt16=2;
             int LA16_0 = input.LA(1);
 
-            if ( (LA16_0==39) ) {
+            if ( (LA16_0==38) ) {
                 alt16=1;
             }
             else if ( (LA16_0==LITERAL) ) {
@@ -2508,28 +2546,28 @@ public class InstALParser extends Parser {
             }
             switch (alt16) {
                 case 1 :
-                    // InstAL.g:513:4: ( 'viol' LPAR event_name ( variable_arguments )? RPAR )
+                    // InstAL.g:531:4: ( 'viol' LPAR event_name ( variable_arguments )? RPAR )
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    // InstAL.g:513:4: ( 'viol' LPAR event_name ( variable_arguments )? RPAR )
-                    // InstAL.g:513:6: 'viol' LPAR event_name ( variable_arguments )? RPAR
+                    // InstAL.g:531:4: ( 'viol' LPAR event_name ( variable_arguments )? RPAR )
+                    // InstAL.g:531:6: 'viol' LPAR event_name ( variable_arguments )? RPAR
                     {
-                    string_literal68=(Token)match(input,39,FOLLOW_39_in_event_varient700); 
+                    string_literal68=(Token)match(input,38,FOLLOW_38_in_event_varient693); 
                     string_literal68_tree = (CommonTree)adaptor.create(string_literal68);
                     adaptor.addChild(root_0, string_literal68_tree);
 
-                    LPAR69=(Token)match(input,LPAR,FOLLOW_LPAR_in_event_varient702); 
+                    LPAR69=(Token)match(input,LPAR,FOLLOW_LPAR_in_event_varient695); 
                     LPAR69_tree = (CommonTree)adaptor.create(LPAR69);
                     adaptor.addChild(root_0, LPAR69_tree);
 
-                    pushFollow(FOLLOW_event_name_in_event_varient704);
+                    pushFollow(FOLLOW_event_name_in_event_varient697);
                     event_name70=event_name();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, event_name70.getTree());
-                    // InstAL.g:513:30: ( variable_arguments )?
+                    // InstAL.g:531:30: ( variable_arguments )?
                     int alt14=2;
                     int LA14_0 = input.LA(1);
 
@@ -2538,9 +2576,9 @@ public class InstALParser extends Parser {
                     }
                     switch (alt14) {
                         case 1 :
-                            // InstAL.g:513:30: variable_arguments
+                            // InstAL.g:531:30: variable_arguments
                             {
-                            pushFollow(FOLLOW_variable_arguments_in_event_varient707);
+                            pushFollow(FOLLOW_variable_arguments_in_event_varient700);
                             variable_arguments71=variable_arguments();
 
                             state._fsp--;
@@ -2552,7 +2590,7 @@ public class InstALParser extends Parser {
 
                     }
 
-                    RPAR72=(Token)match(input,RPAR,FOLLOW_RPAR_in_event_varient710); 
+                    RPAR72=(Token)match(input,RPAR,FOLLOW_RPAR_in_event_varient703); 
                     RPAR72_tree = (CommonTree)adaptor.create(RPAR72);
                     adaptor.addChild(root_0, RPAR72_tree);
 
@@ -2564,20 +2602,20 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:514:5: ( event_name ( variable_arguments )? )
+                    // InstAL.g:532:5: ( event_name ( variable_arguments )? )
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    // InstAL.g:514:5: ( event_name ( variable_arguments )? )
-                    // InstAL.g:514:7: event_name ( variable_arguments )?
+                    // InstAL.g:532:5: ( event_name ( variable_arguments )? )
+                    // InstAL.g:532:7: event_name ( variable_arguments )?
                     {
-                    pushFollow(FOLLOW_event_name_in_event_varient722);
+                    pushFollow(FOLLOW_event_name_in_event_varient715);
                     event_name73=event_name();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, event_name73.getTree());
-                    // InstAL.g:514:19: ( variable_arguments )?
+                    // InstAL.g:532:19: ( variable_arguments )?
                     int alt15=2;
                     int LA15_0 = input.LA(1);
 
@@ -2586,9 +2624,9 @@ public class InstALParser extends Parser {
                     }
                     switch (alt15) {
                         case 1 :
-                            // InstAL.g:514:19: variable_arguments
+                            // InstAL.g:532:19: variable_arguments
                             {
-                            pushFollow(FOLLOW_variable_arguments_in_event_varient725);
+                            pushFollow(FOLLOW_variable_arguments_in_event_varient718);
                             variable_arguments74=variable_arguments();
 
                             state._fsp--;
@@ -2636,7 +2674,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "fluent_varient"
-    // InstAL.g:517:1: fluent_varient returns [String type, String name, ArrayList<String> args] : ( ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR ) | ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR ) | ( fluent_name ( variable_arguments )? ) );
+    // InstAL.g:535:1: fluent_varient returns [String type, String name, ArrayList<String> args] : ( ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR ) | ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR ) | ( fluent_name ( variable_arguments )? ) );
     public final InstALParser.fluent_varient_return fluent_varient() throws RecognitionException {
         InstALParser.fluent_varient_return retval = new InstALParser.fluent_varient_return();
         retval.start = input.LT(1);
@@ -2670,7 +2708,7 @@ public class InstALParser extends Parser {
         CommonTree RPAR84_tree=null;
 
         try {
-            // InstAL.g:518:2: ( ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR ) | ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR ) | ( fluent_name ( variable_arguments )? ) )
+            // InstAL.g:536:2: ( ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR ) | ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR ) | ( fluent_name ( variable_arguments )? ) )
             int alt20=3;
             switch ( input.LA(1) ) {
             case KEY_POW:
@@ -2697,28 +2735,28 @@ public class InstALParser extends Parser {
 
             switch (alt20) {
                 case 1 :
-                    // InstAL.g:518:4: ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR )
+                    // InstAL.g:536:4: ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR )
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    // InstAL.g:518:4: ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR )
-                    // InstAL.g:518:6: KEY_POW LPAR fluent_name ( variable_arguments )? RPAR
+                    // InstAL.g:536:4: ( KEY_POW LPAR fluent_name ( variable_arguments )? RPAR )
+                    // InstAL.g:536:6: KEY_POW LPAR fluent_name ( variable_arguments )? RPAR
                     {
-                    KEY_POW75=(Token)match(input,KEY_POW,FOLLOW_KEY_POW_in_fluent_varient750); 
+                    KEY_POW75=(Token)match(input,KEY_POW,FOLLOW_KEY_POW_in_fluent_varient743); 
                     KEY_POW75_tree = (CommonTree)adaptor.create(KEY_POW75);
                     adaptor.addChild(root_0, KEY_POW75_tree);
 
-                    LPAR76=(Token)match(input,LPAR,FOLLOW_LPAR_in_fluent_varient752); 
+                    LPAR76=(Token)match(input,LPAR,FOLLOW_LPAR_in_fluent_varient745); 
                     LPAR76_tree = (CommonTree)adaptor.create(LPAR76);
                     adaptor.addChild(root_0, LPAR76_tree);
 
-                    pushFollow(FOLLOW_fluent_name_in_fluent_varient754);
+                    pushFollow(FOLLOW_fluent_name_in_fluent_varient747);
                     fluent_name77=fluent_name();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, fluent_name77.getTree());
-                    // InstAL.g:518:31: ( variable_arguments )?
+                    // InstAL.g:536:31: ( variable_arguments )?
                     int alt17=2;
                     int LA17_0 = input.LA(1);
 
@@ -2727,9 +2765,9 @@ public class InstALParser extends Parser {
                     }
                     switch (alt17) {
                         case 1 :
-                            // InstAL.g:518:31: variable_arguments
+                            // InstAL.g:536:31: variable_arguments
                             {
-                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient756);
+                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient749);
                             variable_arguments78=variable_arguments();
 
                             state._fsp--;
@@ -2741,7 +2779,7 @@ public class InstALParser extends Parser {
 
                     }
 
-                    RPAR79=(Token)match(input,RPAR,FOLLOW_RPAR_in_fluent_varient759); 
+                    RPAR79=(Token)match(input,RPAR,FOLLOW_RPAR_in_fluent_varient752); 
                     RPAR79_tree = (CommonTree)adaptor.create(RPAR79);
                     adaptor.addChild(root_0, RPAR79_tree);
 
@@ -2753,28 +2791,28 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:519:5: ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR )
+                    // InstAL.g:537:5: ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR )
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    // InstAL.g:519:5: ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR )
-                    // InstAL.g:519:7: KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR
+                    // InstAL.g:537:5: ( KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR )
+                    // InstAL.g:537:7: KEY_PERM LPAR fluent_name ( variable_arguments )? RPAR
                     {
-                    KEY_PERM80=(Token)match(input,KEY_PERM,FOLLOW_KEY_PERM_in_fluent_varient772); 
+                    KEY_PERM80=(Token)match(input,KEY_PERM,FOLLOW_KEY_PERM_in_fluent_varient765); 
                     KEY_PERM80_tree = (CommonTree)adaptor.create(KEY_PERM80);
                     adaptor.addChild(root_0, KEY_PERM80_tree);
 
-                    LPAR81=(Token)match(input,LPAR,FOLLOW_LPAR_in_fluent_varient774); 
+                    LPAR81=(Token)match(input,LPAR,FOLLOW_LPAR_in_fluent_varient767); 
                     LPAR81_tree = (CommonTree)adaptor.create(LPAR81);
                     adaptor.addChild(root_0, LPAR81_tree);
 
-                    pushFollow(FOLLOW_fluent_name_in_fluent_varient776);
+                    pushFollow(FOLLOW_fluent_name_in_fluent_varient769);
                     fluent_name82=fluent_name();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, fluent_name82.getTree());
-                    // InstAL.g:519:33: ( variable_arguments )?
+                    // InstAL.g:537:33: ( variable_arguments )?
                     int alt18=2;
                     int LA18_0 = input.LA(1);
 
@@ -2783,9 +2821,9 @@ public class InstALParser extends Parser {
                     }
                     switch (alt18) {
                         case 1 :
-                            // InstAL.g:519:33: variable_arguments
+                            // InstAL.g:537:33: variable_arguments
                             {
-                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient778);
+                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient771);
                             variable_arguments83=variable_arguments();
 
                             state._fsp--;
@@ -2797,7 +2835,7 @@ public class InstALParser extends Parser {
 
                     }
 
-                    RPAR84=(Token)match(input,RPAR,FOLLOW_RPAR_in_fluent_varient781); 
+                    RPAR84=(Token)match(input,RPAR,FOLLOW_RPAR_in_fluent_varient774); 
                     RPAR84_tree = (CommonTree)adaptor.create(RPAR84);
                     adaptor.addChild(root_0, RPAR84_tree);
 
@@ -2809,20 +2847,20 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 3 :
-                    // InstAL.g:520:4: ( fluent_name ( variable_arguments )? )
+                    // InstAL.g:538:4: ( fluent_name ( variable_arguments )? )
                     {
                     root_0 = (CommonTree)adaptor.nil();
 
-                    // InstAL.g:520:4: ( fluent_name ( variable_arguments )? )
-                    // InstAL.g:520:6: fluent_name ( variable_arguments )?
+                    // InstAL.g:538:4: ( fluent_name ( variable_arguments )? )
+                    // InstAL.g:538:6: fluent_name ( variable_arguments )?
                     {
-                    pushFollow(FOLLOW_fluent_name_in_fluent_varient793);
+                    pushFollow(FOLLOW_fluent_name_in_fluent_varient786);
                     fluent_name85=fluent_name();
 
                     state._fsp--;
 
                     adaptor.addChild(root_0, fluent_name85.getTree());
-                    // InstAL.g:520:18: ( variable_arguments )?
+                    // InstAL.g:538:18: ( variable_arguments )?
                     int alt19=2;
                     int LA19_0 = input.LA(1);
 
@@ -2831,9 +2869,9 @@ public class InstALParser extends Parser {
                     }
                     switch (alt19) {
                         case 1 :
-                            // InstAL.g:520:18: variable_arguments
+                            // InstAL.g:538:18: variable_arguments
                             {
-                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient795);
+                            pushFollow(FOLLOW_variable_arguments_in_fluent_varient788);
                             variable_arguments86=variable_arguments();
 
                             state._fsp--;
@@ -2878,7 +2916,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "consequence_rule"
-    // InstAL.g:524:1: consequence_rule : ( initiates_rule | terminates_rule ) END ;
+    // InstAL.g:542:1: consequence_rule : ( initiates_rule | terminates_rule ) END ;
     public final InstALParser.consequence_rule_return consequence_rule() throws RecognitionException {
         InstALParser.consequence_rule_return retval = new InstALParser.consequence_rule_return();
         retval.start = input.LT(1);
@@ -2894,19 +2932,19 @@ public class InstALParser extends Parser {
         CommonTree END89_tree=null;
 
         try {
-            // InstAL.g:525:2: ( ( initiates_rule | terminates_rule ) END )
-            // InstAL.g:525:4: ( initiates_rule | terminates_rule ) END
+            // InstAL.g:543:2: ( ( initiates_rule | terminates_rule ) END )
+            // InstAL.g:543:4: ( initiates_rule | terminates_rule ) END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            // InstAL.g:525:4: ( initiates_rule | terminates_rule )
+            // InstAL.g:543:4: ( initiates_rule | terminates_rule )
             int alt21=2;
             alt21 = dfa21.predict(input);
             switch (alt21) {
                 case 1 :
-                    // InstAL.g:525:6: initiates_rule
+                    // InstAL.g:543:6: initiates_rule
                     {
-                    pushFollow(FOLLOW_initiates_rule_in_consequence_rule818);
+                    pushFollow(FOLLOW_initiates_rule_in_consequence_rule811);
                     initiates_rule87=initiates_rule();
 
                     state._fsp--;
@@ -2916,9 +2954,9 @@ public class InstALParser extends Parser {
                     }
                     break;
                 case 2 :
-                    // InstAL.g:525:23: terminates_rule
+                    // InstAL.g:543:23: terminates_rule
                     {
-                    pushFollow(FOLLOW_terminates_rule_in_consequence_rule822);
+                    pushFollow(FOLLOW_terminates_rule_in_consequence_rule815);
                     terminates_rule88=terminates_rule();
 
                     state._fsp--;
@@ -2930,7 +2968,7 @@ public class InstALParser extends Parser {
 
             }
 
-            END89=(Token)match(input,END,FOLLOW_END_in_consequence_rule826); 
+            END89=(Token)match(input,END,FOLLOW_END_in_consequence_rule819); 
             END89_tree = (CommonTree)adaptor.create(END89);
             adaptor.addChild(root_0, END89_tree);
 
@@ -2961,7 +2999,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "initiates_rule"
-    // InstAL.g:527:1: initiates_rule : event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? ;
+    // InstAL.g:545:1: initiates_rule : event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? ;
     public final InstALParser.initiates_rule_return initiates_rule() throws RecognitionException {
         InstALParser.initiates_rule_return retval = new InstALParser.initiates_rule_return();
         retval.start = input.LT(1);
@@ -2981,28 +3019,28 @@ public class InstALParser extends Parser {
         CommonTree KEY_IF92_tree=null;
 
         try {
-            // InstAL.g:528:2: ( event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? )
-            // InstAL.g:528:4: event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )?
+            // InstAL.g:546:2: ( event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? )
+            // InstAL.g:546:4: event_varient KEY_INITIATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )?
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_varient_in_initiates_rule836);
+            pushFollow(FOLLOW_event_varient_in_initiates_rule829);
             event_varient90=event_varient();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_varient90.getTree());
-            KEY_INITIATES91=(Token)match(input,KEY_INITIATES,FOLLOW_KEY_INITIATES_in_initiates_rule838); 
+            KEY_INITIATES91=(Token)match(input,KEY_INITIATES,FOLLOW_KEY_INITIATES_in_initiates_rule831); 
             KEY_INITIATES91_tree = (CommonTree)adaptor.create(KEY_INITIATES91);
             adaptor.addChild(root_0, KEY_INITIATES91_tree);
 
-            pushFollow(FOLLOW_fluents_with_variables_in_initiates_rule842);
+            pushFollow(FOLLOW_fluents_with_variables_in_initiates_rule835);
             results=fluents_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, results.getTree());
-            // InstAL.g:528:63: ( KEY_IF conditions= fluents_with_variables )?
+            // InstAL.g:546:63: ( KEY_IF conditions= fluents_with_variables )?
             int alt22=2;
             int LA22_0 = input.LA(1);
 
@@ -3011,13 +3049,13 @@ public class InstALParser extends Parser {
             }
             switch (alt22) {
                 case 1 :
-                    // InstAL.g:528:65: KEY_IF conditions= fluents_with_variables
+                    // InstAL.g:546:65: KEY_IF conditions= fluents_with_variables
                     {
-                    KEY_IF92=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_initiates_rule846); 
+                    KEY_IF92=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_initiates_rule839); 
                     KEY_IF92_tree = (CommonTree)adaptor.create(KEY_IF92);
                     adaptor.addChild(root_0, KEY_IF92_tree);
 
-                    pushFollow(FOLLOW_fluents_with_variables_in_initiates_rule850);
+                    pushFollow(FOLLOW_fluents_with_variables_in_initiates_rule843);
                     conditions=fluents_with_variables();
 
                     state._fsp--;
@@ -3057,7 +3095,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "terminates_rule"
-    // InstAL.g:531:1: terminates_rule : event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? ;
+    // InstAL.g:549:1: terminates_rule : event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? ;
     public final InstALParser.terminates_rule_return terminates_rule() throws RecognitionException {
         InstALParser.terminates_rule_return retval = new InstALParser.terminates_rule_return();
         retval.start = input.LT(1);
@@ -3077,28 +3115,28 @@ public class InstALParser extends Parser {
         CommonTree KEY_IF95_tree=null;
 
         try {
-            // InstAL.g:532:2: ( event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? )
-            // InstAL.g:532:4: event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )?
+            // InstAL.g:550:2: ( event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )? )
+            // InstAL.g:550:4: event_varient KEY_TERMINATES results= fluents_with_variables ( KEY_IF conditions= fluents_with_variables )?
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_event_varient_in_terminates_rule867);
+            pushFollow(FOLLOW_event_varient_in_terminates_rule860);
             event_varient93=event_varient();
 
             state._fsp--;
 
             adaptor.addChild(root_0, event_varient93.getTree());
-            KEY_TERMINATES94=(Token)match(input,KEY_TERMINATES,FOLLOW_KEY_TERMINATES_in_terminates_rule869); 
+            KEY_TERMINATES94=(Token)match(input,KEY_TERMINATES,FOLLOW_KEY_TERMINATES_in_terminates_rule862); 
             KEY_TERMINATES94_tree = (CommonTree)adaptor.create(KEY_TERMINATES94);
             adaptor.addChild(root_0, KEY_TERMINATES94_tree);
 
-            pushFollow(FOLLOW_fluents_with_variables_in_terminates_rule873);
+            pushFollow(FOLLOW_fluents_with_variables_in_terminates_rule866);
             results=fluents_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, results.getTree());
-            // InstAL.g:532:64: ( KEY_IF conditions= fluents_with_variables )?
+            // InstAL.g:550:64: ( KEY_IF conditions= fluents_with_variables )?
             int alt23=2;
             int LA23_0 = input.LA(1);
 
@@ -3107,13 +3145,13 @@ public class InstALParser extends Parser {
             }
             switch (alt23) {
                 case 1 :
-                    // InstAL.g:532:66: KEY_IF conditions= fluents_with_variables
+                    // InstAL.g:550:66: KEY_IF conditions= fluents_with_variables
                     {
-                    KEY_IF95=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_terminates_rule877); 
+                    KEY_IF95=(Token)match(input,KEY_IF,FOLLOW_KEY_IF_in_terminates_rule870); 
                     KEY_IF95_tree = (CommonTree)adaptor.create(KEY_IF95);
                     adaptor.addChild(root_0, KEY_IF95_tree);
 
-                    pushFollow(FOLLOW_fluents_with_variables_in_terminates_rule881);
+                    pushFollow(FOLLOW_fluents_with_variables_in_terminates_rule874);
                     conditions=fluents_with_variables();
 
                     state._fsp--;
@@ -3153,7 +3191,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "initially_decl"
-    // InstAL.g:536:1: initially_decl : KEY_INITIALLY fluents_with_variables END ;
+    // InstAL.g:554:1: initially_decl : KEY_INITIALLY fluents_with_variables END ;
     public final InstALParser.initially_decl_return initially_decl() throws RecognitionException {
         InstALParser.initially_decl_return retval = new InstALParser.initially_decl_return();
         retval.start = input.LT(1);
@@ -3169,22 +3207,22 @@ public class InstALParser extends Parser {
         CommonTree END98_tree=null;
 
         try {
-            // InstAL.g:537:2: ( KEY_INITIALLY fluents_with_variables END )
-            // InstAL.g:537:4: KEY_INITIALLY fluents_with_variables END
+            // InstAL.g:555:2: ( KEY_INITIALLY fluents_with_variables END )
+            // InstAL.g:555:4: KEY_INITIALLY fluents_with_variables END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_INITIALLY96=(Token)match(input,KEY_INITIALLY,FOLLOW_KEY_INITIALLY_in_initially_decl900); 
+            KEY_INITIALLY96=(Token)match(input,KEY_INITIALLY,FOLLOW_KEY_INITIALLY_in_initially_decl893); 
             KEY_INITIALLY96_tree = (CommonTree)adaptor.create(KEY_INITIALLY96);
             adaptor.addChild(root_0, KEY_INITIALLY96_tree);
 
-            pushFollow(FOLLOW_fluents_with_variables_in_initially_decl902);
+            pushFollow(FOLLOW_fluents_with_variables_in_initially_decl895);
             fluents_with_variables97=fluents_with_variables();
 
             state._fsp--;
 
             adaptor.addChild(root_0, fluents_with_variables97.getTree());
-            END98=(Token)match(input,END,FOLLOW_END_in_initially_decl904); 
+            END98=(Token)match(input,END,FOLLOW_END_in_initially_decl897); 
             END98_tree = (CommonTree)adaptor.create(END98);
             adaptor.addChild(root_0, END98_tree);
 
@@ -3216,7 +3254,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "obligation_decl"
-    // InstAL.g:541:1: obligation_decl : KEY_OBLIGATION LPAR event_varient ',' event_varient ',' event_varient RPAR END ;
+    // InstAL.g:559:1: obligation_decl : KEY_OBLIGATION LPAR act= event_varient ',' before= event_varient ',' otherwise= event_varient RPAR END ;
     public final InstALParser.obligation_decl_return obligation_decl() throws RecognitionException {
         InstALParser.obligation_decl_return retval = new InstALParser.obligation_decl_return();
         retval.start = input.LT(1);
@@ -3225,73 +3263,73 @@ public class InstALParser extends Parser {
 
         Token KEY_OBLIGATION99=null;
         Token LPAR100=null;
+        Token char_literal101=null;
         Token char_literal102=null;
-        Token char_literal104=null;
-        Token RPAR106=null;
-        Token END107=null;
-        InstALParser.event_varient_return event_varient101 = null;
+        Token RPAR103=null;
+        Token END104=null;
+        InstALParser.event_varient_return act = null;
 
-        InstALParser.event_varient_return event_varient103 = null;
+        InstALParser.event_varient_return before = null;
 
-        InstALParser.event_varient_return event_varient105 = null;
+        InstALParser.event_varient_return otherwise = null;
 
 
         CommonTree KEY_OBLIGATION99_tree=null;
         CommonTree LPAR100_tree=null;
+        CommonTree char_literal101_tree=null;
         CommonTree char_literal102_tree=null;
-        CommonTree char_literal104_tree=null;
-        CommonTree RPAR106_tree=null;
-        CommonTree END107_tree=null;
+        CommonTree RPAR103_tree=null;
+        CommonTree END104_tree=null;
 
         try {
-            // InstAL.g:542:2: ( KEY_OBLIGATION LPAR event_varient ',' event_varient ',' event_varient RPAR END )
-            // InstAL.g:542:4: KEY_OBLIGATION LPAR event_varient ',' event_varient ',' event_varient RPAR END
+            // InstAL.g:560:2: ( KEY_OBLIGATION LPAR act= event_varient ',' before= event_varient ',' otherwise= event_varient RPAR END )
+            // InstAL.g:560:4: KEY_OBLIGATION LPAR act= event_varient ',' before= event_varient ',' otherwise= event_varient RPAR END
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            KEY_OBLIGATION99=(Token)match(input,KEY_OBLIGATION,FOLLOW_KEY_OBLIGATION_in_obligation_decl920); 
+            KEY_OBLIGATION99=(Token)match(input,KEY_OBLIGATION,FOLLOW_KEY_OBLIGATION_in_obligation_decl913); 
             KEY_OBLIGATION99_tree = (CommonTree)adaptor.create(KEY_OBLIGATION99);
             adaptor.addChild(root_0, KEY_OBLIGATION99_tree);
 
-            LPAR100=(Token)match(input,LPAR,FOLLOW_LPAR_in_obligation_decl922); 
+            LPAR100=(Token)match(input,LPAR,FOLLOW_LPAR_in_obligation_decl915); 
             LPAR100_tree = (CommonTree)adaptor.create(LPAR100);
             adaptor.addChild(root_0, LPAR100_tree);
 
-            pushFollow(FOLLOW_event_varient_in_obligation_decl924);
-            event_varient101=event_varient();
+            pushFollow(FOLLOW_event_varient_in_obligation_decl919);
+            act=event_varient();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, event_varient101.getTree());
-            char_literal102=(Token)match(input,38,FOLLOW_38_in_obligation_decl926); 
+            adaptor.addChild(root_0, act.getTree());
+            char_literal101=(Token)match(input,37,FOLLOW_37_in_obligation_decl921); 
+            char_literal101_tree = (CommonTree)adaptor.create(char_literal101);
+            adaptor.addChild(root_0, char_literal101_tree);
+
+            pushFollow(FOLLOW_event_varient_in_obligation_decl925);
+            before=event_varient();
+
+            state._fsp--;
+
+            adaptor.addChild(root_0, before.getTree());
+            char_literal102=(Token)match(input,37,FOLLOW_37_in_obligation_decl927); 
             char_literal102_tree = (CommonTree)adaptor.create(char_literal102);
             adaptor.addChild(root_0, char_literal102_tree);
 
-            pushFollow(FOLLOW_event_varient_in_obligation_decl928);
-            event_varient103=event_varient();
+            pushFollow(FOLLOW_event_varient_in_obligation_decl931);
+            otherwise=event_varient();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, event_varient103.getTree());
-            char_literal104=(Token)match(input,38,FOLLOW_38_in_obligation_decl930); 
-            char_literal104_tree = (CommonTree)adaptor.create(char_literal104);
-            adaptor.addChild(root_0, char_literal104_tree);
+            adaptor.addChild(root_0, otherwise.getTree());
+            RPAR103=(Token)match(input,RPAR,FOLLOW_RPAR_in_obligation_decl933); 
+            RPAR103_tree = (CommonTree)adaptor.create(RPAR103);
+            adaptor.addChild(root_0, RPAR103_tree);
 
-            pushFollow(FOLLOW_event_varient_in_obligation_decl932);
-            event_varient105=event_varient();
+            END104=(Token)match(input,END,FOLLOW_END_in_obligation_decl935); 
+            END104_tree = (CommonTree)adaptor.create(END104);
+            adaptor.addChild(root_0, END104_tree);
 
-            state._fsp--;
-
-            adaptor.addChild(root_0, event_varient105.getTree());
-            RPAR106=(Token)match(input,RPAR,FOLLOW_RPAR_in_obligation_decl934); 
-            RPAR106_tree = (CommonTree)adaptor.create(RPAR106);
-            adaptor.addChild(root_0, RPAR106_tree);
-
-            END107=(Token)match(input,END,FOLLOW_END_in_obligation_decl936); 
-            END107_tree = (CommonTree)adaptor.create(END107);
-            adaptor.addChild(root_0, END107_tree);
-
-             log("TODO: Obligations"); 
+             _addObligation((act!=null?act.name:null), (act!=null?act.args:null), (before!=null?before.name:null), (before!=null?before.args:null), (otherwise!=null?otherwise.name:null), (otherwise!=null?otherwise.args:null)); 
 
             }
 
@@ -3325,7 +3363,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "type_arguments"
-    // InstAL.g:546:1: type_arguments returns [ ArrayList<String> args ] : LPAR type_argument ( ',' type_argument )* RPAR ;
+    // InstAL.g:564:1: type_arguments returns [ ArrayList<String> args ] : LPAR ( type_argument ( ',' type_argument )* )? RPAR ;
     public final InstALParser.type_arguments_return type_arguments() throws RecognitionException {
         type_arguments_stack.push(new type_arguments_scope());
         InstALParser.type_arguments_return retval = new InstALParser.type_arguments_return();
@@ -3333,72 +3371,89 @@ public class InstALParser extends Parser {
 
         CommonTree root_0 = null;
 
-        Token LPAR108=null;
-        Token char_literal110=null;
-        Token RPAR112=null;
-        InstALParser.type_argument_return type_argument109 = null;
+        Token LPAR105=null;
+        Token char_literal107=null;
+        Token RPAR109=null;
+        InstALParser.type_argument_return type_argument106 = null;
 
-        InstALParser.type_argument_return type_argument111 = null;
+        InstALParser.type_argument_return type_argument108 = null;
 
 
-        CommonTree LPAR108_tree=null;
-        CommonTree char_literal110_tree=null;
-        CommonTree RPAR112_tree=null;
+        CommonTree LPAR105_tree=null;
+        CommonTree char_literal107_tree=null;
+        CommonTree RPAR109_tree=null;
 
          ((type_arguments_scope)type_arguments_stack.peek()).list = new ArrayList<String>(); 
         try {
-            // InstAL.g:549:2: ( LPAR type_argument ( ',' type_argument )* RPAR )
-            // InstAL.g:549:4: LPAR type_argument ( ',' type_argument )* RPAR
+            // InstAL.g:567:2: ( LPAR ( type_argument ( ',' type_argument )* )? RPAR )
+            // InstAL.g:567:4: LPAR ( type_argument ( ',' type_argument )* )? RPAR
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LPAR108=(Token)match(input,LPAR,FOLLOW_LPAR_in_type_arguments967); 
-            LPAR108_tree = (CommonTree)adaptor.create(LPAR108);
-            adaptor.addChild(root_0, LPAR108_tree);
+            LPAR105=(Token)match(input,LPAR,FOLLOW_LPAR_in_type_arguments966); 
+            LPAR105_tree = (CommonTree)adaptor.create(LPAR105);
+            adaptor.addChild(root_0, LPAR105_tree);
 
-            pushFollow(FOLLOW_type_argument_in_type_arguments969);
-            type_argument109=type_argument();
+            // InstAL.g:567:9: ( type_argument ( ',' type_argument )* )?
+            int alt25=2;
+            int LA25_0 = input.LA(1);
 
-            state._fsp--;
+            if ( (LA25_0==TYPE) ) {
+                alt25=1;
+            }
+            switch (alt25) {
+                case 1 :
+                    // InstAL.g:567:10: type_argument ( ',' type_argument )*
+                    {
+                    pushFollow(FOLLOW_type_argument_in_type_arguments969);
+                    type_argument106=type_argument();
 
-            adaptor.addChild(root_0, type_argument109.getTree());
-            // InstAL.g:549:23: ( ',' type_argument )*
-            loop24:
-            do {
-                int alt24=2;
-                int LA24_0 = input.LA(1);
+                    state._fsp--;
 
-                if ( (LA24_0==38) ) {
-                    alt24=1;
-                }
+                    adaptor.addChild(root_0, type_argument106.getTree());
+                    // InstAL.g:567:24: ( ',' type_argument )*
+                    loop24:
+                    do {
+                        int alt24=2;
+                        int LA24_0 = input.LA(1);
+
+                        if ( (LA24_0==37) ) {
+                            alt24=1;
+                        }
 
 
-                switch (alt24) {
-            	case 1 :
-            	    // InstAL.g:549:24: ',' type_argument
-            	    {
-            	    char_literal110=(Token)match(input,38,FOLLOW_38_in_type_arguments972); 
-            	    char_literal110_tree = (CommonTree)adaptor.create(char_literal110);
-            	    adaptor.addChild(root_0, char_literal110_tree);
+                        switch (alt24) {
+                    	case 1 :
+                    	    // InstAL.g:567:25: ',' type_argument
+                    	    {
+                    	    char_literal107=(Token)match(input,37,FOLLOW_37_in_type_arguments972); 
+                    	    char_literal107_tree = (CommonTree)adaptor.create(char_literal107);
+                    	    adaptor.addChild(root_0, char_literal107_tree);
 
-            	    pushFollow(FOLLOW_type_argument_in_type_arguments974);
-            	    type_argument111=type_argument();
+                    	    pushFollow(FOLLOW_type_argument_in_type_arguments974);
+                    	    type_argument108=type_argument();
 
-            	    state._fsp--;
+                    	    state._fsp--;
 
-            	    adaptor.addChild(root_0, type_argument111.getTree());
+                    	    adaptor.addChild(root_0, type_argument108.getTree());
 
-            	    }
-            	    break;
+                    	    }
+                    	    break;
 
-            	default :
-            	    break loop24;
-                }
-            } while (true);
+                    	default :
+                    	    break loop24;
+                        }
+                    } while (true);
 
-            RPAR112=(Token)match(input,RPAR,FOLLOW_RPAR_in_type_arguments978); 
-            RPAR112_tree = (CommonTree)adaptor.create(RPAR112);
-            adaptor.addChild(root_0, RPAR112_tree);
+
+                    }
+                    break;
+
+            }
+
+            RPAR109=(Token)match(input,RPAR,FOLLOW_RPAR_in_type_arguments981); 
+            RPAR109_tree = (CommonTree)adaptor.create(RPAR109);
+            adaptor.addChild(root_0, RPAR109_tree);
 
              retval.args = ((type_arguments_scope)type_arguments_stack.peek()).list; 
 
@@ -3429,30 +3484,30 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "type_argument"
-    // InstAL.g:552:1: type_argument : type_name ;
+    // InstAL.g:570:1: type_argument : type_name ;
     public final InstALParser.type_argument_return type_argument() throws RecognitionException {
         InstALParser.type_argument_return retval = new InstALParser.type_argument_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        InstALParser.type_name_return type_name113 = null;
+        InstALParser.type_name_return type_name110 = null;
 
 
 
         try {
-            // InstAL.g:553:2: ( type_name )
-            // InstAL.g:553:4: type_name
+            // InstAL.g:571:2: ( type_name )
+            // InstAL.g:571:4: type_name
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_type_name_in_type_argument992);
-            type_name113=type_name();
+            pushFollow(FOLLOW_type_name_in_type_argument995);
+            type_name110=type_name();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, type_name113.getTree());
-             ((type_arguments_scope)type_arguments_stack.peek()).list.add((type_name113!=null?input.toString(type_name113.start,type_name113.stop):null)); 
+            adaptor.addChild(root_0, type_name110.getTree());
+             ((type_arguments_scope)type_arguments_stack.peek()).list.add((type_name110!=null?input.toString(type_name110.start,type_name110.stop):null)); 
 
             }
 
@@ -3487,7 +3542,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_type_arguments"
-    // InstAL.g:556:1: variable_type_arguments returns [ArrayList<String> args] : LPAR variable_type_argument ( ',' variable_type_argument )* RPAR ;
+    // InstAL.g:574:1: variable_type_arguments returns [ArrayList<String> args] : LPAR variable_type_argument ( ',' variable_type_argument )* RPAR ;
     public final InstALParser.variable_type_arguments_return variable_type_arguments() throws RecognitionException {
         variable_type_arguments_stack.push(new variable_type_arguments_scope());
         InstALParser.variable_type_arguments_return retval = new InstALParser.variable_type_arguments_return();
@@ -3495,72 +3550,72 @@ public class InstALParser extends Parser {
 
         CommonTree root_0 = null;
 
-        Token LPAR114=null;
-        Token char_literal116=null;
-        Token RPAR118=null;
-        InstALParser.variable_type_argument_return variable_type_argument115 = null;
+        Token LPAR111=null;
+        Token char_literal113=null;
+        Token RPAR115=null;
+        InstALParser.variable_type_argument_return variable_type_argument112 = null;
 
-        InstALParser.variable_type_argument_return variable_type_argument117 = null;
+        InstALParser.variable_type_argument_return variable_type_argument114 = null;
 
 
-        CommonTree LPAR114_tree=null;
-        CommonTree char_literal116_tree=null;
-        CommonTree RPAR118_tree=null;
+        CommonTree LPAR111_tree=null;
+        CommonTree char_literal113_tree=null;
+        CommonTree RPAR115_tree=null;
 
          ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).list = new ArrayList<String>(); ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).map = new Hashtable<String, String>(); 
         try {
-            // InstAL.g:559:2: ( LPAR variable_type_argument ( ',' variable_type_argument )* RPAR )
-            // InstAL.g:559:4: LPAR variable_type_argument ( ',' variable_type_argument )* RPAR
+            // InstAL.g:577:2: ( LPAR variable_type_argument ( ',' variable_type_argument )* RPAR )
+            // InstAL.g:577:4: LPAR variable_type_argument ( ',' variable_type_argument )* RPAR
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LPAR114=(Token)match(input,LPAR,FOLLOW_LPAR_in_variable_type_arguments1021); 
-            LPAR114_tree = (CommonTree)adaptor.create(LPAR114);
-            adaptor.addChild(root_0, LPAR114_tree);
+            LPAR111=(Token)match(input,LPAR,FOLLOW_LPAR_in_variable_type_arguments1024); 
+            LPAR111_tree = (CommonTree)adaptor.create(LPAR111);
+            adaptor.addChild(root_0, LPAR111_tree);
 
-            pushFollow(FOLLOW_variable_type_argument_in_variable_type_arguments1023);
-            variable_type_argument115=variable_type_argument();
+            pushFollow(FOLLOW_variable_type_argument_in_variable_type_arguments1026);
+            variable_type_argument112=variable_type_argument();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, variable_type_argument115.getTree());
-            // InstAL.g:559:32: ( ',' variable_type_argument )*
-            loop25:
+            adaptor.addChild(root_0, variable_type_argument112.getTree());
+            // InstAL.g:577:32: ( ',' variable_type_argument )*
+            loop26:
             do {
-                int alt25=2;
-                int LA25_0 = input.LA(1);
+                int alt26=2;
+                int LA26_0 = input.LA(1);
 
-                if ( (LA25_0==38) ) {
-                    alt25=1;
+                if ( (LA26_0==37) ) {
+                    alt26=1;
                 }
 
 
-                switch (alt25) {
+                switch (alt26) {
             	case 1 :
-            	    // InstAL.g:559:34: ',' variable_type_argument
+            	    // InstAL.g:577:34: ',' variable_type_argument
             	    {
-            	    char_literal116=(Token)match(input,38,FOLLOW_38_in_variable_type_arguments1027); 
-            	    char_literal116_tree = (CommonTree)adaptor.create(char_literal116);
-            	    adaptor.addChild(root_0, char_literal116_tree);
+            	    char_literal113=(Token)match(input,37,FOLLOW_37_in_variable_type_arguments1030); 
+            	    char_literal113_tree = (CommonTree)adaptor.create(char_literal113);
+            	    adaptor.addChild(root_0, char_literal113_tree);
 
-            	    pushFollow(FOLLOW_variable_type_argument_in_variable_type_arguments1029);
-            	    variable_type_argument117=variable_type_argument();
+            	    pushFollow(FOLLOW_variable_type_argument_in_variable_type_arguments1032);
+            	    variable_type_argument114=variable_type_argument();
 
             	    state._fsp--;
 
-            	    adaptor.addChild(root_0, variable_type_argument117.getTree());
+            	    adaptor.addChild(root_0, variable_type_argument114.getTree());
 
             	    }
             	    break;
 
             	default :
-            	    break loop25;
+            	    break loop26;
                 }
             } while (true);
 
-            RPAR118=(Token)match(input,RPAR,FOLLOW_RPAR_in_variable_type_arguments1034); 
-            RPAR118_tree = (CommonTree)adaptor.create(RPAR118);
-            adaptor.addChild(root_0, RPAR118_tree);
+            RPAR115=(Token)match(input,RPAR,FOLLOW_RPAR_in_variable_type_arguments1037); 
+            RPAR115_tree = (CommonTree)adaptor.create(RPAR115);
+            adaptor.addChild(root_0, RPAR115_tree);
 
 
             }
@@ -3590,44 +3645,44 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_type_argument"
-    // InstAL.g:562:1: variable_type_argument : variable_name ':' type_name ;
+    // InstAL.g:580:1: variable_type_argument : variable_name ':' type_name ;
     public final InstALParser.variable_type_argument_return variable_type_argument() throws RecognitionException {
         InstALParser.variable_type_argument_return retval = new InstALParser.variable_type_argument_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token char_literal120=null;
-        InstALParser.variable_name_return variable_name119 = null;
+        Token char_literal117=null;
+        InstALParser.variable_name_return variable_name116 = null;
 
-        InstALParser.type_name_return type_name121 = null;
+        InstALParser.type_name_return type_name118 = null;
 
 
-        CommonTree char_literal120_tree=null;
+        CommonTree char_literal117_tree=null;
 
         try {
-            // InstAL.g:563:2: ( variable_name ':' type_name )
-            // InstAL.g:563:4: variable_name ':' type_name
+            // InstAL.g:581:2: ( variable_name ':' type_name )
+            // InstAL.g:581:4: variable_name ':' type_name
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_variable_name_in_variable_type_argument1046);
-            variable_name119=variable_name();
+            pushFollow(FOLLOW_variable_name_in_variable_type_argument1049);
+            variable_name116=variable_name();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, variable_name119.getTree());
-            char_literal120=(Token)match(input,40,FOLLOW_40_in_variable_type_argument1048); 
-            char_literal120_tree = (CommonTree)adaptor.create(char_literal120);
-            adaptor.addChild(root_0, char_literal120_tree);
+            adaptor.addChild(root_0, variable_name116.getTree());
+            char_literal117=(Token)match(input,39,FOLLOW_39_in_variable_type_argument1051); 
+            char_literal117_tree = (CommonTree)adaptor.create(char_literal117);
+            adaptor.addChild(root_0, char_literal117_tree);
 
-            pushFollow(FOLLOW_type_name_in_variable_type_argument1050);
-            type_name121=type_name();
+            pushFollow(FOLLOW_type_name_in_variable_type_argument1053);
+            type_name118=type_name();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, type_name121.getTree());
-             ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).list.add((variable_name119!=null?input.toString(variable_name119.start,variable_name119.stop):null)); ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).map.put((variable_name119!=null?input.toString(variable_name119.start,variable_name119.stop):null), (type_name121!=null?input.toString(type_name121.start,type_name121.stop):null)); 
+            adaptor.addChild(root_0, type_name118.getTree());
+             ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).list.add((variable_name116!=null?input.toString(variable_name116.start,variable_name116.stop):null)); ((variable_type_arguments_scope)variable_type_arguments_stack.peek()).map.put((variable_name116!=null?input.toString(variable_name116.start,variable_name116.stop):null), (type_name118!=null?input.toString(type_name118.start,type_name118.stop):null)); 
 
             }
 
@@ -3661,7 +3716,7 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_arguments"
-    // InstAL.g:566:1: variable_arguments returns [ArrayList<String> args] : LPAR variable_argument ( ',' variable_argument )* RPAR ;
+    // InstAL.g:584:1: variable_arguments returns [ArrayList<String> args] : LPAR variable_argument ( ',' variable_argument )* RPAR ;
     public final InstALParser.variable_arguments_return variable_arguments() throws RecognitionException {
         variable_arguments_stack.push(new variable_arguments_scope());
         InstALParser.variable_arguments_return retval = new InstALParser.variable_arguments_return();
@@ -3669,72 +3724,72 @@ public class InstALParser extends Parser {
 
         CommonTree root_0 = null;
 
-        Token LPAR122=null;
-        Token char_literal124=null;
-        Token RPAR126=null;
-        InstALParser.variable_argument_return variable_argument123 = null;
+        Token LPAR119=null;
+        Token char_literal121=null;
+        Token RPAR123=null;
+        InstALParser.variable_argument_return variable_argument120 = null;
 
-        InstALParser.variable_argument_return variable_argument125 = null;
+        InstALParser.variable_argument_return variable_argument122 = null;
 
 
-        CommonTree LPAR122_tree=null;
-        CommonTree char_literal124_tree=null;
-        CommonTree RPAR126_tree=null;
+        CommonTree LPAR119_tree=null;
+        CommonTree char_literal121_tree=null;
+        CommonTree RPAR123_tree=null;
 
          ((variable_arguments_scope)variable_arguments_stack.peek()).list = new ArrayList<String>(); 
         try {
-            // InstAL.g:569:2: ( LPAR variable_argument ( ',' variable_argument )* RPAR )
-            // InstAL.g:569:4: LPAR variable_argument ( ',' variable_argument )* RPAR
+            // InstAL.g:587:2: ( LPAR variable_argument ( ',' variable_argument )* RPAR )
+            // InstAL.g:587:4: LPAR variable_argument ( ',' variable_argument )* RPAR
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            LPAR122=(Token)match(input,LPAR,FOLLOW_LPAR_in_variable_arguments1080); 
-            LPAR122_tree = (CommonTree)adaptor.create(LPAR122);
-            adaptor.addChild(root_0, LPAR122_tree);
+            LPAR119=(Token)match(input,LPAR,FOLLOW_LPAR_in_variable_arguments1083); 
+            LPAR119_tree = (CommonTree)adaptor.create(LPAR119);
+            adaptor.addChild(root_0, LPAR119_tree);
 
-            pushFollow(FOLLOW_variable_argument_in_variable_arguments1082);
-            variable_argument123=variable_argument();
+            pushFollow(FOLLOW_variable_argument_in_variable_arguments1085);
+            variable_argument120=variable_argument();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, variable_argument123.getTree());
-            // InstAL.g:569:27: ( ',' variable_argument )*
-            loop26:
+            adaptor.addChild(root_0, variable_argument120.getTree());
+            // InstAL.g:587:27: ( ',' variable_argument )*
+            loop27:
             do {
-                int alt26=2;
-                int LA26_0 = input.LA(1);
+                int alt27=2;
+                int LA27_0 = input.LA(1);
 
-                if ( (LA26_0==38) ) {
-                    alt26=1;
+                if ( (LA27_0==37) ) {
+                    alt27=1;
                 }
 
 
-                switch (alt26) {
+                switch (alt27) {
             	case 1 :
-            	    // InstAL.g:569:29: ',' variable_argument
+            	    // InstAL.g:587:29: ',' variable_argument
             	    {
-            	    char_literal124=(Token)match(input,38,FOLLOW_38_in_variable_arguments1086); 
-            	    char_literal124_tree = (CommonTree)adaptor.create(char_literal124);
-            	    adaptor.addChild(root_0, char_literal124_tree);
+            	    char_literal121=(Token)match(input,37,FOLLOW_37_in_variable_arguments1089); 
+            	    char_literal121_tree = (CommonTree)adaptor.create(char_literal121);
+            	    adaptor.addChild(root_0, char_literal121_tree);
 
-            	    pushFollow(FOLLOW_variable_argument_in_variable_arguments1088);
-            	    variable_argument125=variable_argument();
+            	    pushFollow(FOLLOW_variable_argument_in_variable_arguments1091);
+            	    variable_argument122=variable_argument();
 
             	    state._fsp--;
 
-            	    adaptor.addChild(root_0, variable_argument125.getTree());
+            	    adaptor.addChild(root_0, variable_argument122.getTree());
 
             	    }
             	    break;
 
             	default :
-            	    break loop26;
+            	    break loop27;
                 }
             } while (true);
 
-            RPAR126=(Token)match(input,RPAR,FOLLOW_RPAR_in_variable_arguments1093); 
-            RPAR126_tree = (CommonTree)adaptor.create(RPAR126);
-            adaptor.addChild(root_0, RPAR126_tree);
+            RPAR123=(Token)match(input,RPAR,FOLLOW_RPAR_in_variable_arguments1096); 
+            RPAR123_tree = (CommonTree)adaptor.create(RPAR123);
+            adaptor.addChild(root_0, RPAR123_tree);
 
              retval.args = ((variable_arguments_scope)variable_arguments_stack.peek()).list; 
 
@@ -3765,30 +3820,30 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_argument"
-    // InstAL.g:572:1: variable_argument : variable_name ;
+    // InstAL.g:590:1: variable_argument : variable_name ;
     public final InstALParser.variable_argument_return variable_argument() throws RecognitionException {
         InstALParser.variable_argument_return retval = new InstALParser.variable_argument_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        InstALParser.variable_name_return variable_name127 = null;
+        InstALParser.variable_name_return variable_name124 = null;
 
 
 
         try {
-            // InstAL.g:573:2: ( variable_name )
-            // InstAL.g:573:4: variable_name
+            // InstAL.g:591:2: ( variable_name )
+            // InstAL.g:591:4: variable_name
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            pushFollow(FOLLOW_variable_name_in_variable_argument1107);
-            variable_name127=variable_name();
+            pushFollow(FOLLOW_variable_name_in_variable_argument1110);
+            variable_name124=variable_name();
 
             state._fsp--;
 
-            adaptor.addChild(root_0, variable_name127.getTree());
-             ((variable_arguments_scope)variable_arguments_stack.peek()).list.add((variable_name127!=null?input.toString(variable_name127.start,variable_name127.stop):null)); 
+            adaptor.addChild(root_0, variable_name124.getTree());
+             ((variable_arguments_scope)variable_arguments_stack.peek()).list.add((variable_name124!=null?input.toString(variable_name124.start,variable_name124.stop):null)); 
 
             }
 
@@ -3816,26 +3871,33 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "variable_name"
-    // InstAL.g:576:1: variable_name : VARIABLE ;
+    // InstAL.g:594:1: variable_name : ( TYPE | LITERAL );
     public final InstALParser.variable_name_return variable_name() throws RecognitionException {
         InstALParser.variable_name_return retval = new InstALParser.variable_name_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token VARIABLE128=null;
+        Token set125=null;
 
-        CommonTree VARIABLE128_tree=null;
+        CommonTree set125_tree=null;
 
         try {
-            // InstAL.g:577:2: ( VARIABLE )
-            // InstAL.g:577:4: VARIABLE
+            // InstAL.g:595:2: ( TYPE | LITERAL )
+            // InstAL.g:
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            VARIABLE128=(Token)match(input,VARIABLE,FOLLOW_VARIABLE_in_variable_name1121); 
-            VARIABLE128_tree = (CommonTree)adaptor.create(VARIABLE128);
-            adaptor.addChild(root_0, VARIABLE128_tree);
+            set125=(Token)input.LT(1);
+            if ( input.LA(1)==LITERAL||input.LA(1)==TYPE ) {
+                input.consume();
+                adaptor.addChild(root_0, (CommonTree)adaptor.create(set125));
+                state.errorRecovery=false;
+            }
+            else {
+                MismatchedSetException mse = new MismatchedSetException(null,input);
+                throw mse;
+            }
 
 
             }
@@ -3864,27 +3926,27 @@ public class InstALParser extends Parser {
     };
 
     // $ANTLR start "operation"
-    // InstAL.g:580:1: operation : ( LT | GT | EQ | NE );
+    // InstAL.g:598:1: operation : ( LT | GT | EQ | NE );
     public final InstALParser.operation_return operation() throws RecognitionException {
         InstALParser.operation_return retval = new InstALParser.operation_return();
         retval.start = input.LT(1);
 
         CommonTree root_0 = null;
 
-        Token set129=null;
+        Token set126=null;
 
-        CommonTree set129_tree=null;
+        CommonTree set126_tree=null;
 
         try {
-            // InstAL.g:581:2: ( LT | GT | EQ | NE )
+            // InstAL.g:599:2: ( LT | GT | EQ | NE )
             // InstAL.g:
             {
             root_0 = (CommonTree)adaptor.nil();
 
-            set129=(Token)input.LT(1);
+            set126=(Token)input.LT(1);
             if ( (input.LA(1)>=LT && input.LA(1)<=NE) ) {
                 input.consume();
-                adaptor.addChild(root_0, (CommonTree)adaptor.create(set129));
+                adaptor.addChild(root_0, (CommonTree)adaptor.create(set126));
                 state.errorRecovery=false;
             }
             else {
@@ -3923,17 +3985,18 @@ public class InstALParser extends Parser {
     static final String DFA3_eofS =
         "\26\uffff";
     static final String DFA3_minS =
-        "\1\7\4\uffff\1\21\1\16\1\7\1\31\2\uffff\1\21\1\22\1\31\1\16\1\31"+
-        "\1\16\2\22\1\31\2\22";
+        "\1\7\4\uffff\1\22\1\17\2\7\2\uffff\1\22\1\23\1\7\1\17\1\7\1\17\2"+
+        "\23\1\7\2\23";
     static final String DFA3_maxS =
-        "\1\47\4\uffff\1\21\1\26\1\7\1\31\2\uffff\1\22\1\46\1\31\1\26\1\31"+
-        "\1\26\2\46\1\31\1\22\1\46";
+        "\1\46\4\uffff\1\22\1\27\1\7\1\11\2\uffff\1\23\1\45\1\11\1\27\1\11"+
+        "\1\27\2\45\1\11\1\23\1\45";
     static final String DFA3_acceptS =
         "\1\uffff\1\1\1\2\1\3\1\4\4\uffff\1\5\1\6\13\uffff";
     static final String DFA3_specialS =
         "\26\uffff}>";
     static final String[] DFA3_transitionS = {
-            "\1\6\1\1\3\uffff\2\3\12\uffff\1\4\11\uffff\4\2\1\uffff\1\5",
+            "\1\6\1\1\3\uffff\1\2\2\3\12\uffff\1\4\10\uffff\3\2\1\uffff\1"+
+            "\5",
             "",
             "",
             "",
@@ -3941,20 +4004,20 @@ public class InstALParser extends Parser {
             "\1\7",
             "\1\11\2\uffff\1\10\3\uffff\2\12",
             "\1\13",
-            "\1\14",
+            "\1\14\1\uffff\1\14",
             "",
             "",
             "\1\15\1\16",
-            "\1\20\23\uffff\1\17",
-            "\1\21",
+            "\1\20\21\uffff\1\17",
+            "\1\21\1\uffff\1\21",
             "\1\11\6\uffff\2\12",
-            "\1\22",
+            "\1\22\1\uffff\1\22",
             "\1\11\6\uffff\2\12",
-            "\1\24\23\uffff\1\23",
-            "\1\20\23\uffff\1\17",
-            "\1\25",
+            "\1\24\21\uffff\1\23",
+            "\1\20\21\uffff\1\17",
+            "\1\25\1\uffff\1\25",
             "\1\16",
-            "\1\24\23\uffff\1\23"
+            "\1\24\21\uffff\1\23"
     };
 
     static final short[] DFA3_eot = DFA.unpackEncodedString(DFA3_eotS);
@@ -3987,7 +4050,7 @@ public class InstALParser extends Parser {
             this.transition = DFA3_transition;
         }
         public String getDescription() {
-            return "404:1: constituent_decl : ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule );";
+            return "422:1: constituent_decl : ( type_decl | event_decl | fluent_decl | obligation_decl | generates_rule | consequence_rule );";
         }
     }
     static final String DFA21_eotS =
@@ -3995,34 +4058,33 @@ public class InstALParser extends Parser {
     static final String DFA21_eofS =
         "\22\uffff";
     static final String DFA21_minS =
-        "\1\7\2\21\1\7\1\31\2\uffff\1\21\1\22\1\31\1\25\1\31\1\25\2\22\1"+
-        "\31\2\22";
+        "\1\7\2\22\2\7\2\uffff\1\22\1\23\1\7\1\26\1\7\1\26\2\23\1\7\2\23";
     static final String DFA21_maxS =
-        "\1\47\1\21\1\26\1\7\1\31\2\uffff\1\22\1\46\1\31\1\26\1\31\1\26\2"+
-        "\46\1\31\1\22\1\46";
+        "\1\46\1\22\1\27\1\7\1\11\2\uffff\1\23\1\45\1\11\1\27\1\11\1\27\2"+
+        "\45\1\11\1\23\1\45";
     static final String DFA21_acceptS =
         "\5\uffff\1\1\1\2\13\uffff";
     static final String DFA21_specialS =
         "\22\uffff}>";
     static final String[] DFA21_transitionS = {
-            "\1\2\37\uffff\1\1",
+            "\1\2\36\uffff\1\1",
             "\1\3",
             "\1\4\3\uffff\1\5\1\6",
             "\1\7",
-            "\1\10",
+            "\1\10\1\uffff\1\10",
             "",
             "",
             "\1\11\1\12",
-            "\1\14\23\uffff\1\13",
-            "\1\15",
+            "\1\14\21\uffff\1\13",
+            "\1\15\1\uffff\1\15",
             "\1\5\1\6",
-            "\1\16",
+            "\1\16\1\uffff\1\16",
             "\1\5\1\6",
-            "\1\20\23\uffff\1\17",
-            "\1\14\23\uffff\1\13",
-            "\1\21",
+            "\1\20\21\uffff\1\17",
+            "\1\14\21\uffff\1\13",
+            "\1\21\1\uffff\1\21",
             "\1\12",
-            "\1\20\23\uffff\1\17"
+            "\1\20\21\uffff\1\17"
     };
 
     static final short[] DFA21_eot = DFA.unpackEncodedString(DFA21_eotS);
@@ -4055,145 +4117,145 @@ public class InstALParser extends Parser {
             this.transition = DFA21_transition;
         }
         public String getDescription() {
-            return "525:4: ( initiates_rule | terminates_rule )";
+            return "543:4: ( initiates_rule | terminates_rule )";
         }
     }
  
 
-    public static final BitSet FOLLOW_institution_decl_in_instal_specification58 = new BitSet(new long[]{0x000000BC01803190L});
-    public static final BitSet FOLLOW_constituent_decl_in_instal_specification69 = new BitSet(new long[]{0x000000BC01803190L});
-    public static final BitSet FOLLOW_LINE_COMMENT_in_instal_specification73 = new BitSet(new long[]{0x000000BC01803190L});
-    public static final BitSet FOLLOW_initially_decl_in_instal_specification82 = new BitSet(new long[]{0x0000000000800010L});
-    public static final BitSet FOLLOW_LINE_COMMENT_in_instal_specification88 = new BitSet(new long[]{0x0000000000800010L});
+    public static final BitSet FOLLOW_institution_decl_in_instal_specification58 = new BitSet(new long[]{0x0000005C03007190L});
+    public static final BitSet FOLLOW_constituent_decl_in_instal_specification69 = new BitSet(new long[]{0x0000005C03007190L});
+    public static final BitSet FOLLOW_LINE_COMMENT_in_instal_specification73 = new BitSet(new long[]{0x0000005C03007190L});
+    public static final BitSet FOLLOW_initially_decl_in_instal_specification82 = new BitSet(new long[]{0x0000000001000010L});
+    public static final BitSet FOLLOW_LINE_COMMENT_in_instal_specification88 = new BitSet(new long[]{0x0000000001000010L});
     public static final BitSet FOLLOW_EOF_in_instal_specification95 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_INST_in_institution_decl119 = new BitSet(new long[]{0x0000000000000080L});
-    public static final BitSet FOLLOW_institution_name_in_institution_decl121 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_institution_decl123 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LITERAL_in_institution_name138 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_type_decl_in_constituent_decl148 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_decl_in_constituent_decl154 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fluent_decl_in_constituent_decl160 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_obligation_decl_in_constituent_decl165 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_generates_rule_in_constituent_decl172 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_consequence_rule_in_constituent_decl178 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_TYPE_in_type_decl192 = new BitSet(new long[]{0x0000000000000200L});
-    public static final BitSet FOLLOW_type_name_in_type_decl194 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_type_decl196 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_TYPE_in_type_name213 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_extended_event_decl_in_event_decl233 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_standard_event_decl_in_event_decl242 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_event_decl251 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_description_in_standard_event_decl267 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_type_arguments_in_standard_event_decl269 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_description_in_extended_event_decl288 = new BitSet(new long[]{0x0000000000020000L});
-    public static final BitSet FOLLOW_variable_type_arguments_in_extended_event_decl290 = new BitSet(new long[]{0x0000000000000400L});
-    public static final BitSet FOLLOW_KEY_WITH_in_extended_event_decl292 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_constraints_in_extended_event_decl294 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_type_in_event_description312 = new BitSet(new long[]{0x0000000000000800L});
-    public static final BitSet FOLLOW_KEY_EVENT_in_event_description314 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_name_in_event_description316 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LITERAL_in_event_name330 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_set_in_event_type340 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_variable_constraint_in_variable_constraints366 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_38_in_variable_constraints370 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_constraint_in_variable_constraints372 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_variable_name_in_variable_constraint385 = new BitSet(new long[]{0x000000003C000000L});
-    public static final BitSet FOLLOW_operation_in_variable_constraint387 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_name_in_variable_constraint389 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_noninertial_fluent_decl_in_fluent_decl405 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_standard_fluent_decl_in_fluent_decl413 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_fluent_decl421 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_NONINERTIAL_in_noninertial_fluent_decl439 = new BitSet(new long[]{0x0000000000003000L});
-    public static final BitSet FOLLOW_standard_fluent_decl_in_noninertial_fluent_decl441 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_FLUENT_in_standard_fluent_decl459 = new BitSet(new long[]{0x0000000000000080L});
-    public static final BitSet FOLLOW_fluent_name_in_standard_fluent_decl461 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_type_arguments_in_standard_fluent_decl463 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LITERAL_in_fluent_name478 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_varient_in_generates_rule491 = new BitSet(new long[]{0x0000000000004000L});
-    public static final BitSet FOLLOW_KEY_GENERATES_in_generates_rule493 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_events_with_variables_in_generates_rule497 = new BitSet(new long[]{0x0000000000008040L});
-    public static final BitSet FOLLOW_KEY_IF_in_generates_rule501 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_with_negation_in_generates_rule505 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_generates_rule510 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_with_variables_in_events_with_variables540 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_38_in_events_with_variables544 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_with_variables_in_events_with_variables546 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_event_varient_in_event_with_variables563 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fluent_with_variables_in_fluents_with_variables591 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_38_in_fluents_with_variables595 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluent_with_variables_in_fluents_with_variables597 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_fluent_varient_in_fluent_with_variables615 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation643 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_38_in_fluents_with_variables_with_negation647 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation649 = new BitSet(new long[]{0x0000004000000002L});
-    public static final BitSet FOLLOW_KEY_NOT_in_fluent_with_variables_with_negation668 = new BitSet(new long[]{0x0000000000190080L});
+    public static final BitSet FOLLOW_KEY_INST_in_institution_decl112 = new BitSet(new long[]{0x0000000000000080L});
+    public static final BitSet FOLLOW_institution_name_in_institution_decl114 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_institution_decl116 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LITERAL_in_institution_name131 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_type_decl_in_constituent_decl141 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_decl_in_constituent_decl147 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fluent_decl_in_constituent_decl153 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_obligation_decl_in_constituent_decl158 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_generates_rule_in_constituent_decl165 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_consequence_rule_in_constituent_decl171 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_TYPE_in_type_decl185 = new BitSet(new long[]{0x0000000000000200L});
+    public static final BitSet FOLLOW_type_name_in_type_decl187 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_type_decl189 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_TYPE_in_type_name206 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_extended_event_decl_in_event_decl226 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_standard_event_decl_in_event_decl235 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_event_decl244 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_description_in_standard_event_decl260 = new BitSet(new long[]{0x0000000000040002L});
+    public static final BitSet FOLLOW_type_arguments_in_standard_event_decl262 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_description_in_extended_event_decl281 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_variable_type_arguments_in_extended_event_decl283 = new BitSet(new long[]{0x0000000000000400L});
+    public static final BitSet FOLLOW_KEY_WITH_in_extended_event_decl285 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_constraints_in_extended_event_decl287 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_type_in_event_description305 = new BitSet(new long[]{0x0000000000000800L});
+    public static final BitSet FOLLOW_KEY_EVENT_in_event_description307 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_name_in_event_description309 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LITERAL_in_event_name323 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_set_in_event_type333 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_variable_constraint_in_variable_constraints359 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_37_in_variable_constraints363 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_constraint_in_variable_constraints365 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_variable_name_in_variable_constraint378 = new BitSet(new long[]{0x000000003C000000L});
+    public static final BitSet FOLLOW_operation_in_variable_constraint380 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_name_in_variable_constraint382 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_noninertial_fluent_decl_in_fluent_decl398 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_standard_fluent_decl_in_fluent_decl406 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_fluent_decl414 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_NONINERTIAL_in_noninertial_fluent_decl432 = new BitSet(new long[]{0x0000000000006000L});
+    public static final BitSet FOLLOW_standard_fluent_decl_in_noninertial_fluent_decl434 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_FLUENT_in_standard_fluent_decl452 = new BitSet(new long[]{0x0000000000000080L});
+    public static final BitSet FOLLOW_fluent_name_in_standard_fluent_decl454 = new BitSet(new long[]{0x0000000000040002L});
+    public static final BitSet FOLLOW_type_arguments_in_standard_fluent_decl456 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LITERAL_in_fluent_name471 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_varient_in_generates_rule484 = new BitSet(new long[]{0x0000000000008000L});
+    public static final BitSet FOLLOW_KEY_GENERATES_in_generates_rule486 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_events_with_variables_in_generates_rule490 = new BitSet(new long[]{0x0000000000010040L});
+    public static final BitSet FOLLOW_KEY_IF_in_generates_rule494 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_with_negation_in_generates_rule498 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_generates_rule503 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_with_variables_in_events_with_variables533 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_37_in_events_with_variables537 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_with_variables_in_events_with_variables539 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_event_varient_in_event_with_variables556 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fluent_with_variables_in_fluents_with_variables584 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_37_in_fluents_with_variables588 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluent_with_variables_in_fluents_with_variables590 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_fluent_varient_in_fluent_with_variables608 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation636 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_37_in_fluents_with_variables_with_negation640 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluent_with_variables_with_negation_in_fluents_with_variables_with_negation642 = new BitSet(new long[]{0x0000002000000002L});
+    public static final BitSet FOLLOW_KEY_NOT_in_fluent_with_variables_with_negation661 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluent_varient_in_fluent_with_variables_with_negation663 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_fluent_varient_in_fluent_with_variables_with_negation670 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fluent_varient_in_fluent_with_variables_with_negation677 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_39_in_event_varient700 = new BitSet(new long[]{0x0000000000020000L});
-    public static final BitSet FOLLOW_LPAR_in_event_varient702 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_name_in_event_varient704 = new BitSet(new long[]{0x0000000000060000L});
-    public static final BitSet FOLLOW_variable_arguments_in_event_varient707 = new BitSet(new long[]{0x0000000000040000L});
-    public static final BitSet FOLLOW_RPAR_in_event_varient710 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_name_in_event_varient722 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_variable_arguments_in_event_varient725 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_POW_in_fluent_varient750 = new BitSet(new long[]{0x0000000000020000L});
-    public static final BitSet FOLLOW_LPAR_in_fluent_varient752 = new BitSet(new long[]{0x0000000000000080L});
-    public static final BitSet FOLLOW_fluent_name_in_fluent_varient754 = new BitSet(new long[]{0x0000000000060000L});
-    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient756 = new BitSet(new long[]{0x0000000000040000L});
-    public static final BitSet FOLLOW_RPAR_in_fluent_varient759 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_PERM_in_fluent_varient772 = new BitSet(new long[]{0x0000000000020000L});
-    public static final BitSet FOLLOW_LPAR_in_fluent_varient774 = new BitSet(new long[]{0x0000000000000080L});
-    public static final BitSet FOLLOW_fluent_name_in_fluent_varient776 = new BitSet(new long[]{0x0000000000060000L});
-    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient778 = new BitSet(new long[]{0x0000000000040000L});
-    public static final BitSet FOLLOW_RPAR_in_fluent_varient781 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_fluent_name_in_fluent_varient793 = new BitSet(new long[]{0x0000000000020002L});
-    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient795 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_initiates_rule_in_consequence_rule818 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_terminates_rule_in_consequence_rule822 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_consequence_rule826 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_varient_in_initiates_rule836 = new BitSet(new long[]{0x0000000000200000L});
-    public static final BitSet FOLLOW_KEY_INITIATES_in_initiates_rule838 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_in_initiates_rule842 = new BitSet(new long[]{0x0000000000008002L});
-    public static final BitSet FOLLOW_KEY_IF_in_initiates_rule846 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_in_initiates_rule850 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_event_varient_in_terminates_rule867 = new BitSet(new long[]{0x0000000000400000L});
-    public static final BitSet FOLLOW_KEY_TERMINATES_in_terminates_rule869 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_in_terminates_rule873 = new BitSet(new long[]{0x0000000000008002L});
-    public static final BitSet FOLLOW_KEY_IF_in_terminates_rule877 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_in_terminates_rule881 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_INITIALLY_in_initially_decl900 = new BitSet(new long[]{0x0000000000190080L});
-    public static final BitSet FOLLOW_fluents_with_variables_in_initially_decl902 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_initially_decl904 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_KEY_OBLIGATION_in_obligation_decl920 = new BitSet(new long[]{0x0000000000020000L});
-    public static final BitSet FOLLOW_LPAR_in_obligation_decl922 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_varient_in_obligation_decl924 = new BitSet(new long[]{0x0000004000000000L});
-    public static final BitSet FOLLOW_38_in_obligation_decl926 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_varient_in_obligation_decl928 = new BitSet(new long[]{0x0000004000000000L});
-    public static final BitSet FOLLOW_38_in_obligation_decl930 = new BitSet(new long[]{0x0000008000000080L});
-    public static final BitSet FOLLOW_event_varient_in_obligation_decl932 = new BitSet(new long[]{0x0000000000040000L});
-    public static final BitSet FOLLOW_RPAR_in_obligation_decl934 = new BitSet(new long[]{0x0000000000000040L});
-    public static final BitSet FOLLOW_END_in_obligation_decl936 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAR_in_type_arguments967 = new BitSet(new long[]{0x0000000000000200L});
-    public static final BitSet FOLLOW_type_argument_in_type_arguments969 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_38_in_type_arguments972 = new BitSet(new long[]{0x0000000000000200L});
-    public static final BitSet FOLLOW_type_argument_in_type_arguments974 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_RPAR_in_type_arguments978 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_type_name_in_type_argument992 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAR_in_variable_type_arguments1021 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_type_argument_in_variable_type_arguments1023 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_38_in_variable_type_arguments1027 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_type_argument_in_variable_type_arguments1029 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_RPAR_in_variable_type_arguments1034 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_variable_name_in_variable_type_argument1046 = new BitSet(new long[]{0x0000010000000000L});
-    public static final BitSet FOLLOW_40_in_variable_type_argument1048 = new BitSet(new long[]{0x0000000000000200L});
-    public static final BitSet FOLLOW_type_name_in_variable_type_argument1050 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_LPAR_in_variable_arguments1080 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_argument_in_variable_arguments1082 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_38_in_variable_arguments1086 = new BitSet(new long[]{0x0000000002000000L});
-    public static final BitSet FOLLOW_variable_argument_in_variable_arguments1088 = new BitSet(new long[]{0x0000004000040000L});
-    public static final BitSet FOLLOW_RPAR_in_variable_arguments1093 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_variable_name_in_variable_argument1107 = new BitSet(new long[]{0x0000000000000002L});
-    public static final BitSet FOLLOW_VARIABLE_in_variable_name1121 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_38_in_event_varient693 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_LPAR_in_event_varient695 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_name_in_event_varient697 = new BitSet(new long[]{0x00000000000C0000L});
+    public static final BitSet FOLLOW_variable_arguments_in_event_varient700 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_RPAR_in_event_varient703 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_name_in_event_varient715 = new BitSet(new long[]{0x0000000000040002L});
+    public static final BitSet FOLLOW_variable_arguments_in_event_varient718 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_POW_in_fluent_varient743 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_LPAR_in_fluent_varient745 = new BitSet(new long[]{0x0000000000000080L});
+    public static final BitSet FOLLOW_fluent_name_in_fluent_varient747 = new BitSet(new long[]{0x00000000000C0000L});
+    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient749 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_RPAR_in_fluent_varient752 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_PERM_in_fluent_varient765 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_LPAR_in_fluent_varient767 = new BitSet(new long[]{0x0000000000000080L});
+    public static final BitSet FOLLOW_fluent_name_in_fluent_varient769 = new BitSet(new long[]{0x00000000000C0000L});
+    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient771 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_RPAR_in_fluent_varient774 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_fluent_name_in_fluent_varient786 = new BitSet(new long[]{0x0000000000040002L});
+    public static final BitSet FOLLOW_variable_arguments_in_fluent_varient788 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_initiates_rule_in_consequence_rule811 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_terminates_rule_in_consequence_rule815 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_consequence_rule819 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_varient_in_initiates_rule829 = new BitSet(new long[]{0x0000000000400000L});
+    public static final BitSet FOLLOW_KEY_INITIATES_in_initiates_rule831 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_in_initiates_rule835 = new BitSet(new long[]{0x0000000000010002L});
+    public static final BitSet FOLLOW_KEY_IF_in_initiates_rule839 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_in_initiates_rule843 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_event_varient_in_terminates_rule860 = new BitSet(new long[]{0x0000000000800000L});
+    public static final BitSet FOLLOW_KEY_TERMINATES_in_terminates_rule862 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_in_terminates_rule866 = new BitSet(new long[]{0x0000000000010002L});
+    public static final BitSet FOLLOW_KEY_IF_in_terminates_rule870 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_in_terminates_rule874 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_INITIALLY_in_initially_decl893 = new BitSet(new long[]{0x0000000000320080L});
+    public static final BitSet FOLLOW_fluents_with_variables_in_initially_decl895 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_initially_decl897 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_KEY_OBLIGATION_in_obligation_decl913 = new BitSet(new long[]{0x0000000000040000L});
+    public static final BitSet FOLLOW_LPAR_in_obligation_decl915 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_varient_in_obligation_decl919 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_obligation_decl921 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_varient_in_obligation_decl925 = new BitSet(new long[]{0x0000002000000000L});
+    public static final BitSet FOLLOW_37_in_obligation_decl927 = new BitSet(new long[]{0x0000004000000080L});
+    public static final BitSet FOLLOW_event_varient_in_obligation_decl931 = new BitSet(new long[]{0x0000000000080000L});
+    public static final BitSet FOLLOW_RPAR_in_obligation_decl933 = new BitSet(new long[]{0x0000000000000040L});
+    public static final BitSet FOLLOW_END_in_obligation_decl935 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAR_in_type_arguments966 = new BitSet(new long[]{0x0000000000080200L});
+    public static final BitSet FOLLOW_type_argument_in_type_arguments969 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_37_in_type_arguments972 = new BitSet(new long[]{0x0000000000000200L});
+    public static final BitSet FOLLOW_type_argument_in_type_arguments974 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_RPAR_in_type_arguments981 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_type_name_in_type_argument995 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAR_in_variable_type_arguments1024 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_type_argument_in_variable_type_arguments1026 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_37_in_variable_type_arguments1030 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_type_argument_in_variable_type_arguments1032 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_RPAR_in_variable_type_arguments1037 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_variable_name_in_variable_type_argument1049 = new BitSet(new long[]{0x0000008000000000L});
+    public static final BitSet FOLLOW_39_in_variable_type_argument1051 = new BitSet(new long[]{0x0000000000000200L});
+    public static final BitSet FOLLOW_type_name_in_variable_type_argument1053 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_LPAR_in_variable_arguments1083 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_argument_in_variable_arguments1085 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_37_in_variable_arguments1089 = new BitSet(new long[]{0x0000000000000280L});
+    public static final BitSet FOLLOW_variable_argument_in_variable_arguments1091 = new BitSet(new long[]{0x0000002000080000L});
+    public static final BitSet FOLLOW_RPAR_in_variable_arguments1096 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_variable_name_in_variable_argument1110 = new BitSet(new long[]{0x0000000000000002L});
+    public static final BitSet FOLLOW_set_in_variable_name0 = new BitSet(new long[]{0x0000000000000002L});
     public static final BitSet FOLLOW_set_in_operation0 = new BitSet(new long[]{0x0000000000000002L});
 
 }
