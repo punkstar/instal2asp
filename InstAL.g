@@ -28,10 +28,11 @@ options {
 }
 
 @members {	
-	public Institution i;
+	public Institution i = new Institution("holder", 2); // Set it to a holder institution for testing the grammar
 	public Domain d = new Domain();
 	protected Hashtable<String, Type> _typeMap = new Hashtable<String, Type>();
-	protected Hashtable<String, Fluent> _fluentMap = new Hashtable<String, Fluent>();
+	protected Hashtable<String, NoninertialFluent> _noninertialFluentMap = new Hashtable<String, NoninertialFluent>();
+	protected Hashtable<String, Fluent> _inertialFluentMap = new Hashtable<String, Fluent>();
 	protected Hashtable<String, uk.ac.bath.cs.agents.instal.Event> _eventMap = new Hashtable<String, uk.ac.bath.cs.agents.instal.Event>();
 
 	private static void log(String message) {
@@ -52,7 +53,7 @@ options {
 	
 	// Constructors
 	protected void _setInsitutionName(String name) {
-		i = new Institution(name, 10);
+		i.setName(name);
 	}
 	
 	protected void _addType(String name) {
@@ -68,107 +69,112 @@ options {
 	
 	// OMGWTFBBQ!
 	protected void _addEvent(String type, String name, ArrayList<String> args) {
-		if (type.equals("exogenous")) {
-			ExogenousEvent e = new ExogenousEvent(name);
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
-		
-					e.addParameter(t);
+		try {
+			if (type.equals("exogenous")) {
+				ExogenousEvent e = new ExogenousEvent(name);
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						e.addParameter(t);
+					}
 				}
-			}
-			i.event(e);
-			_eventMap.put(name, e);
-		} else if (type.equals("inst")) {
-			NormativeEvent e = new NormativeEvent(name);
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
-		
-					e.addParameter(t);
+				i.event(e);
+				_eventMap.put(name, e);
+			} else if (type.equals("inst")) {
+				NormativeEvent e = new NormativeEvent(name);
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						e.addParameter(t);
+					}
 				}
-			}
-			i.event(e);
-			_eventMap.put(name, e);
-		} else if (type.equals("creation")) {
-			log("Created creation event: " + name);
-			CreationEvent e = new CreationEvent(name);
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
-		
-					e.addParameter(t);
+				i.event(e);
+				_eventMap.put(name, e);
+			} else if (type.equals("creation")) {
+				CreationEvent e = new CreationEvent(name);
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						e.addParameter(t);
+					}
 				}
-			}
-			i.event(e);
-			_eventMap.put(name, e);
-		} else if (type.equals("violation")) {
-			ViolationEvent e = new ViolationEvent(name);
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
-		
-					e.addParameter(t);
+				i.event(e);
+				_eventMap.put(name, e);
+			} else if (type.equals("violation")) {
+				ViolationEvent e = new ViolationEvent(name);
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						e.addParameter(t);
+					}
 				}
+				i.event(e);
+				_eventMap.put(name, e);
+			} else {
+				emitErrorMessage("Unrecognised event type '" + type + "'");
+				return;
 			}
-			i.event(e);
-			_eventMap.put(name, e);
-		} else {
-			emitErrorMessage("Unrecognised event type '" + type + "'");
-			return;
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with an event definition: " + e.getMessage());
 		}
 	}
 	
 	protected void _addFluent(String type, String name, ArrayList<String> args) {
-	
-		if (_fluentMap.containsKey(name)) {
-			emitErrorMessage("Fluent '" + name + "' already defined");
-			return;
-		}
-	
-		if (type.equals("noninertial")) {
-			NoninertialFluent f = new NoninertialFluent(name);
-			
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
-		
-					f.addParameter(t);
-				}
+		try {
+			if (_inertialFluentMap.containsKey(name)) {
+				emitErrorMessage("Fluent '" + name + "' already defined");
+				return;
 			}
-			
-			i.fluent(f);
-			
-			_fluentMap.put(name, f);
-		} else if (type.equals("inertial")) {
-			Fluent f = new Fluent(name);
-			
-			if (args != null) {
-				Iterator<String> iter = args.iterator();
-				while (iter.hasNext()) {
-					String key = iter.next();
-					Type t = _getType(key);
 		
-					f.addParameter(t);
+			if (type.equals("noninertial")) {
+				NoninertialFluent f = new NoninertialFluent(name);
+				
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						f.addParameter(t);
+					}
 				}
+				
+				i.noninertial(f);
+				_noninertialFluentMap.put(name, f);
+			} else if (type.equals("inertial")) {
+				Fluent f = new Fluent(name);
+				
+				if (args != null) {
+					Iterator<String> iter = args.iterator();
+					while (iter.hasNext()) {
+						String key = iter.next();
+						Type t = _getType(key);
+			
+						f.addParameter(t);
+					}
+				}
+				
+				i.fluent(f);
+				
+				_inertialFluentMap.put(name, f);
+			} else {
+				emitErrorMessage("Unrecognised fluent type '" + type + "'");
+				return;
 			}
-			
-			i.fluent(f);
-			
-			_fluentMap.put(name, f);
-		} else {
-			emitErrorMessage("Unrecognised fluent type '" + type + "'");
-			return;
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with a fluent definition: " + e.getMessage());
 		}
 	}
 
@@ -178,14 +184,18 @@ options {
 		if (event_variables != null) {
 			event_vars_array = event_variables.toArray(new String[] {});
 		}
-	
-		if (_getEvent(event) != null) {
-			Generates g = new Generates(_getEvent(event), event_vars_array);
-			
-			g = (Generates) _addRuleConditions(g,condition_fluents);
-			g = (Generates) _addRuleResultEvents(g,result_events);
-			
-			i.generates(g);
+		
+		try {
+			if (_getEvent(event) != null) {
+				Generates g = new Generates(_getEvent(event), event_vars_array);
+				
+				g = (Generates) _addRuleConditions(g,condition_fluents);
+				g = (Generates) _addRuleResultEvents(g,result_events);
+				
+				i.generates(g);
+			}
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with a generates rule: " + e.getMessage());
 		}
 	}
 	
@@ -196,19 +206,21 @@ options {
 			event_vars_array = event_variables.toArray(new String[] {});
 		}
 		
-		log("Initiates event: " + event);
-	
-		if (_getEvent(event) != null) {
-			Initiates in = new Initiates(_getEvent(event), event_vars_array);
-			
-			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
-				in = (Initiates) _addRuleConditions(in, condition_fluents);
-				in = (Initiates) _addRuleResultFluents(in, result_fluents);
+		try {
+			if (_getEvent(event) != null) {
+				Initiates in = new Initiates(_getEvent(event), event_vars_array);
 				
-				i.initiates(in);
-			} else {
-				log("Ignoring inititates because there are fluents that don't exist");
+				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
+					in = (Initiates) _addRuleConditions(in, condition_fluents);
+					in = (Initiates) _addRuleResultFluents(in, result_fluents);
+					
+					i.initiates(in);
+				} else {
+					log("Ignoring inititates because there are fluents that don't exist");
+				}
 			}
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with an initiates rule: " + e.getMessage());
 		}
 	}
 
@@ -219,33 +231,49 @@ options {
 			event_vars_array = event_variables.toArray(new String[] {});
 		}
 	
-		if (_getEvent(event) != null) {
-			Terminates t = new Terminates(_getEvent(event), event_vars_array);
-			
-			if (_checkFluentsExist(result_fluents) && _checkFluentsExist(condition_fluents)) {	
-				t = (Terminates) _addRuleConditions(t, condition_fluents);
-				t = (Terminates) _addRuleResultFluents(t, result_fluents);
+		try {
+			if (_getEvent(event) != null) {
+				Terminates t = new Terminates(_getEvent(event), event_vars_array);
 				
-				i.terminates(t);
-			} else {
-				log("Ignoring terminates because there are fluents that don't exist");
-			}
+				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
+					t = (Terminates) _addRuleConditions(t, condition_fluents);
+					t = (Terminates) _addRuleResultFluents(t, result_fluents);
+					
+					i.terminates(t);
+				} else {
+					log("Ignoring terminates because there are fluents that don't exist");
+				}
+			}		
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with a terminates rule: " + e.getMessage());
 		}
 	}
 	
-	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) {
+	protected void _addObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
+		try {
+			Obligation o = new Obligation();
+			
+			o.act(_getEvent(act), act_vars.toArray(new String[] {}))
+			 .before(_getEvent(before), before_vars.toArray(new String[] {}))
+			 .otherwise(_getEvent(otherwise), otherwise_vars.toArray(new String[] {}));
+			 
+			i.obl(o);
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with an obligation rule: " + e.getMessage());
+		}
+	}
+	
+	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) throws Exception {
 		// Conditions
 		if (condition_fluents != null) {
 			Iterator<FluentCondition> iter2 = condition_fluents.iterator();
 			while (iter2.hasNext()) {
 				FluentCondition cond = iter2.next();
 				
-				log("Condition: +/-?" + cond.fluent);
-				
 				if (cond.sign) {
-					r.condition(_getFluent(cond.fluent), cond.args);
+					r.condition(_getInertialFluent(cond.fluent), cond.args);
 				} else {
-					r.condition(false, _getFluent(cond.fluent), cond.args);
+					r.condition(false, _getInertialFluent(cond.fluent), cond.args);
 				}
 			}
 		}
@@ -253,19 +281,17 @@ options {
 		return r;
 	}
 	
-	protected Rule _addRuleResultFluents(Rule r, ArrayList<FluentCondition> result_fluents) {
+	protected Rule _addRuleResultFluents(Rule r, ArrayList<FluentCondition> result_fluents) throws Exception {
 		// Results
 		if (result_fluents != null) {
 			Iterator<FluentCondition> iter = result_fluents.iterator();
 			while (iter.hasNext()) {
 				FluentCondition f_v = iter.next();
 				
-				log("Fluent Result: " + f_v.fluent);
-				
 				if (f_v.args == null) {
-					r.result(_getFluent(f_v.fluent));
+					r.result(_getInertialFluent(f_v.fluent));
 				} else {
-					r.result(_getFluent(f_v.fluent), f_v.args);
+					r.result(_getInertialFluent(f_v.fluent), f_v.args);
 				}
 			}
 		}
@@ -273,14 +299,12 @@ options {
 		return r;
 	}
 	
-	protected Rule _addRuleResultEvents(Rule r, ArrayList<EventWithVariables> result_events) {
+	protected Rule _addRuleResultEvents(Rule r, ArrayList<EventWithVariables> result_events) throws Exception {
 		// Results
 		if (result_events != null) {
 			Iterator<EventWithVariables> iter = result_events.iterator();
 			while (iter.hasNext()) {
 				EventWithVariables e_v = iter.next();
-				
-				log("Event Result: " + e_v.name);
 				
 				if (e_v.args == null) {
 					r.result(_getEvent(e_v.name));
@@ -294,40 +318,40 @@ options {
 	}
 	
 	// Utility
-	protected Type _getType(String name) {
+	protected Type _getType(String name) throws Exception {
 		if (_typeMap.containsKey(name)) {
 			return _typeMap.get(name);
 		} else {
 			emitErrorMessage("Type '" + name + "' is undefined");
-			return null;
+			throw new Exception("Type '" + name + "' is undefined");
 		}
 	}
 	
-	protected uk.ac.bath.cs.agents.instal.Event _getEvent(String name) {
+	protected uk.ac.bath.cs.agents.instal.Event _getEvent(String name) throws Exception {
 		if (_eventMap.containsKey(name)) {
 			return _eventMap.get(name);
 		} else {
 			emitErrorMessage("Event '" + name + "' is undefined");
-			return null;
+			throw new Exception("Event '" + name + "' is undefined");
 		}
 	}
 	
-	protected Fluent _getFluent(String name) {
-		if(_fluentMap.containsKey(name)) {
-			return _fluentMap.get(name);
+	protected Fluent _getInertialFluent(String name) throws Exception {
+		if(_inertialFluentMap.containsKey(name)) {
+			return _inertialFluentMap.get(name);
 		} else {
 			emitErrorMessage("Fluent '" + name + "' is undefined");
-			return null;
+			throw new Exception("Fluent '" + name + "' is undefined");
 		}
 	}
 	
-	protected boolean _checkFluentsExist(ArrayList<FluentCondition> fluents) {
+	protected boolean _checkInertialFluentsExist(ArrayList<FluentCondition> fluents) throws Exception {
 		if (fluents != null) {
 			Iterator<FluentCondition> iter = fluents.iterator();
 			while(iter.hasNext()) {
 				FluentCondition f = iter.next();
 				
-				if (_getFluent(f.fluent) == null) {
+				if (_getInertialFluent(f.fluent) == null) {
 					return false;
 				}
 			}
@@ -438,7 +462,7 @@ event_name
 	:	LITERAL;
 	
 event_type
-	:	( 'exogenous' | 'inst' | 'creation' | 'violation' );
+	:	( 'exogenous' | 'inst' | EVENT_KEY_CREATE | 'violation' );
 	
 variable_constraints
 	:	variable_constraint ( ',' variable_constraint )*;
@@ -533,14 +557,14 @@ initially_decl
 	
 /* OBLIGATIONS */
 obligation_decl
-	:	KEY_OBLIGATION LPAR event_varient ',' event_varient ',' event_varient RPAR END	{ log("TODO: Obligations"); }
+	:	KEY_OBLIGATION LPAR act=event_varient ',' before=event_varient ',' otherwise=event_varient RPAR END	{ _addObligation($act.name, $act.args, $before.name, $before.args, $otherwise.name, $otherwise.args); }
 	;
 	
 /* UTILITY */
 type_arguments returns [ ArrayList<String> args ]
 	scope { ArrayList<String> list; }
 	@init { $type_arguments::list = new ArrayList<String>(); }
-	:	LPAR type_argument (',' type_argument)* RPAR	{ $args = $type_arguments::list; }
+	:	LPAR (type_argument (',' type_argument)*)?  RPAR	{ $args = $type_arguments::list; }
 	;
 	
 type_argument
@@ -568,7 +592,7 @@ variable_argument
 	;
 	
 variable_name
-	:	VARIABLE/* (VARIABLE | TYPE | LITERAL) */
+	:	TYPE | LITERAL
 	;
 	
 operation
@@ -595,10 +619,13 @@ KEY_PERM	:	'perm';
 KEY_POW		:	'pow';
 KEY_NONINERTIAL :	'noninertial';
 
+EVENT_KEY_CREATE
+	:	('create'|'creation')
+	;
+
 LPAR	:	'(';
 RPAR	:	')';
 END	:	';';
-VARIABLE:	( UCALPHA | DIGIT )+; // Apparently we're allowed digits at the start, including one letter digits
 TYPE	:	UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*;
 LITERAL	:	LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*;
 LT	:	( '<' | 'lt' | 'LT' );
@@ -611,3 +638,4 @@ fragment LCALPHA	:	'a'..'z';
 fragment DIGIT		:	'0'..'9';
 
 ANY	: 	. { skip(); };
+
