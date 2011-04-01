@@ -1,0 +1,19 @@
+This repository contains the instal2asp program for compiling InstAL specification(s) into their corresponding ASP.
+
+This repository uses git submodules.  When you first checkout this repository you'll need to run the following to bring in the submodule dependencies.
+
+git submodule init
+git submodule update
+
+To build the instal2asp program (which is really just a bash wrapper around a java invoke) run the build process, which is controlled by make, with:
+
+make build
+
+To execute tests, run:
+
+make test
+
+For program usage information, which is always up to date due to the jcommader usage for option parsing, run:
+
+./instal2asp --help
+
