@@ -96,7 +96,7 @@ options {
 				}
 				i.event(e);
 				_eventMap.put(name, e);
-			} else if (type.equals("creation")) {
+			} else if (type.equals("creation") || type.equals("create")) {
 				CreationEvent e = new CreationEvent(name);
 				if (args != null) {
 					Iterator<String> iter = args.iterator();
@@ -315,6 +315,22 @@ options {
 		}
 		
 		return r;
+	}
+	
+	protected void _addInitiallyFluents(ArrayList<FluentCondition> fluents) {
+		try {
+			Iterator<FluentCondition> iter = fluents.iterator();
+			while (iter.hasNext()) {
+				FluentCondition f = iter.next();
+				_addInitiallyFluent(f);
+			}
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with an initially statement: " + e.getMessage());
+		}
+	}
+	
+	protected void _addInitiallyFluent(FluentCondition f) throws Exception {
+		i.initially(_getInertialFluent(f.fluent).initially(f.args));
 	}
 	
 	// Utility
@@ -552,12 +568,12 @@ terminates_rule
 	
 /* INITIALLY */
 initially_decl
-	:	KEY_INITIALLY initially_component+ END	{ log("TODO: initially_decl"); }
+	:	KEY_INITIALLY initially_component+ END
 	;
 	
 initially_component
-	:	fluents_with_variables
-	|	','? obligation_statement ','?
+	:	f=fluents_with_variables		{ _addInitiallyFluents($f.fluents); }
+	|	','? o=obligation_statement ','?	{ log("TODO: Initially obligations statement: " + $o.text); }
 	;
 	
 /* OBLIGATIONS */
@@ -643,7 +659,7 @@ LPAR	:	'(';
 RPAR	:	')';
 END	:	';';
 TYPE	:	UCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*;
-LITERAL	:	LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*;
+LITERAL	:	INTEGER | (LCALPHA ( DIGIT | UCALPHA | LCALPHA | '_' )*);
 LT	:	( '<' | 'lt' | 'LT' );
 GT	:	( '>' | 'gt' | 'GT' );
 EQ	:	( '=' | '==' | 'eq' | 'EQ' );
@@ -652,6 +668,7 @@ NE	:	( '!=' | 'ne' | 'NE' | '<>' );
 fragment UCALPHA	:	'A'..'Z';
 fragment LCALPHA	:	'a'..'z';
 fragment DIGIT		:	'0'..'9';
+fragment INTEGER	:	DIGIT+;
 
 ANY	: 	. { skip(); };
 

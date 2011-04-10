@@ -21,4 +21,8 @@ clean:
 test: clean all
 	java -classpath lib/antlr-3.3-complete.jar:classes org.antlr.gunit.Interp InstAL.gunit
 
+jar:
+	mkdir -p build
+	cd classes &&  jar -cf ../build/instal-parser.jar uk/ac/bath/cs/agents/instal/parser/*.class
+
 .PHONY: all instal2asp parser instal clean test

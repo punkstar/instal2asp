@@ -131,6 +131,7 @@ public class CommandLine {
         } catch (IllegalArgumentException e_i) {
             this._exception("NickException: " + e_i.getMessage());
         } catch (Exception e) {
+            e.printStackTrace();
             this._exception("GeneralException: " + e.getMessage());
         }
     }
