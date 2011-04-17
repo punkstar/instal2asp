@@ -92,8 +92,7 @@ options {
 						Type t = _getType(key);
 			
 						e.addParameter(t);
-					}
-				}
+					}				}
 				i.event(e);
 				_eventMap.put(name, e);
 			} else if (type.equals("creation") || type.equals("create")) {
@@ -106,7 +105,7 @@ options {
 			
 						e.addParameter(t);
 					}
-				}
+				} 
 				i.event(e);
 				_eventMap.put(name, e);
 			} else if (type.equals("violation")) {
@@ -210,7 +209,7 @@ options {
 			if (_getEvent(event) != null) {
 				Initiates in = new Initiates(_getEvent(event), event_vars_array);
 				
-				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
+				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {
 					in = (Initiates) _addRuleConditions(in, condition_fluents);
 					in = (Initiates) _addRuleResultFluents(in, result_fluents);
 					
@@ -220,7 +219,8 @@ options {
 				}
 			}
 		} catch (Exception e) {
-			emitErrorMessage("There was an error with an initiates rule: " + e.getMessage());
+			emitErrorMessage("There was an error with an initiates rule: " + e.getMessage() + ", Event: " + event);
+			e.printStackTrace();
 		}
 	}
 
@@ -237,6 +237,7 @@ options {
 				
 				if (_checkInertialFluentsExist(result_fluents) && _checkInertialFluentsExist(condition_fluents)) {	
 					t = (Terminates) _addRuleConditions(t, condition_fluents);
+
 					t = (Terminates) _addRuleResultFluents(t, result_fluents);
 					
 					i.terminates(t);
@@ -270,10 +271,12 @@ options {
 			while (iter2.hasNext()) {
 				FluentCondition cond = iter2.next();
 				
+				_addInertialFluent(cond);
+				
 				if (cond.sign) {
-					r.condition(_getInertialFluent(cond.fluent), cond.args);
+					r.condition(_getInertialFluent(cond.getFluent()), cond.args);
 				} else {
-					r.condition(false, _getInertialFluent(cond.fluent), cond.args);
+					r.condition(false, _getInertialFluent(cond.getFluent()), cond.args);
 				}
 			}
 		}
@@ -288,10 +291,12 @@ options {
 			while (iter.hasNext()) {
 				FluentCondition f_v = iter.next();
 				
+				_addInertialFluent(f_v);
+				
 				if (f_v.args == null) {
-					r.result(_getInertialFluent(f_v.fluent));
+					r.result(_getInertialFluent(f_v.getFluent()));
 				} else {
-					r.result(_getInertialFluent(f_v.fluent), f_v.args);
+					r.result(_getInertialFluent(f_v.getFluent()), f_v.args);
 				}
 			}
 		}
@@ -330,7 +335,8 @@ options {
 	}
 	
 	protected void _addInitiallyFluent(FluentCondition f) throws Exception {
-		i.initially(_getInertialFluent(f.fluent).initially(f.args));
+	    _addInertialFluent(f);
+		i.initially(_getInertialFluent(f.getFluent()).initially(f.args));
 	}
 	
 	// Utility
@@ -361,13 +367,31 @@ options {
 		}
 	}
 	
-	protected boolean _checkInertialFluentsExist(ArrayList<FluentCondition> fluents) throws Exception {
+	protected Fluent _addInertialFluent(FluentCondition fc) throws Exception {
+	    if (!_inertialFluentMap.containsKey(fc.getFluent())) {
+	        if (fc.isModified()) {
+	            if (fc.modifier.equals("perm")) {
+        	        _inertialFluentMap.put(fc.getFluent(), _getEvent(fc.name).pow());	            
+	            } else if (fc.modifier.equals("pow")) {
+        	        _inertialFluentMap.put(fc.getFluent(), _getEvent(fc.name).pow());
+	            }
+	        }
+	    }
+	    
+	    return _getInertialFluent(fc.getFluent());
+	}
+	
+	protected boolean _checkInertialFluentsExist(ArrayList<FluentCondition> fluents) {
 		if (fluents != null) {
 			Iterator<FluentCondition> iter = fluents.iterator();
 			while(iter.hasNext()) {
 				FluentCondition f = iter.next();
 				
-				if (_getInertialFluent(f.fluent) == null) {
+				try {
+					if (_getInertialFluent(f.getFluent()) == null) {
+						return false;
+					}
+				} catch (Exception e) {
 					return false;
 				}
 			}
@@ -378,18 +402,38 @@ options {
 	
 	private class FluentCondition {
 		public boolean sign;
-		public String fluent;
+		public String name;
 		public String[] args;
+		public String modifier;
 		
-		public FluentCondition(boolean sign, String fluent, ArrayList<String> args) {
+		public FluentCondition(boolean sign, String fluent, ArrayList<String> args, String modifier) {
 			this.sign = sign;
-			this.fluent = fluent;
+			this.name = fluent;
+			this.modifier = modifier;
 			
 			if (args != null) {
 				this.args = args.toArray(new String[] {});
 			} else {
 				this.args = null;
 			}
+		}
+		
+		public FluentCondition(boolean sign, String fluent, ArrayList<String> args) {
+			this(sign, fluent, args, "");
+		}
+		
+		public String getFluent() {
+			if (modifier.equals("pow")) {
+				return "pow(" + this.name + ")";			
+			} else if (modifier.equals("perm")) {
+				return "perm(" + this.name + ")";
+			} else {
+				return this.name;
+			}
+		}
+		
+		public boolean isModified() {
+		    return !this.modifier.equals("");
 		}
 	}
 	
@@ -528,7 +572,7 @@ fluents_with_variables returns [ArrayList<FluentCondition> fluents]
 	;
 	
 fluent_with_variables
-	:	fluent_varient	{ $fluents_with_variables::list.add(new FluentCondition(false, $fluent_varient.name, $fluent_varient.args)); }
+	:	fluent_varient	{ $fluents_with_variables::list.add(new FluentCondition(false, $fluent_varient.name, $fluent_varient.args, $fluent_varient.modifier)); }
 	;
 
 fluents_with_variables_with_negation returns [ArrayList<FluentCondition> fluents]
@@ -548,10 +592,10 @@ event_varient returns [String name, ArrayList<String> args]
 	| 	( event_name  variable_arguments? )			{ $name = $event_name.text; $args = $variable_arguments.args; }
 	;
 	
-fluent_varient returns [String type, String name, ArrayList<String> args]
-	:	( KEY_POW LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; }
-	|	( fluent_name variable_arguments? )				{ $name = $fluent_name.text; $args = $variable_arguments.args; }
+fluent_varient returns [String type, String name, ArrayList<String> args, String modifier]
+	:	( KEY_POW LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "pow";  }
+	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "perm"; }
+	|	( fluent_name variable_arguments? )				{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "";     }
 	;
 
 /* CONSEQUENCE RULES */

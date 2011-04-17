@@ -172,6 +172,5 @@ initially previous(t7,t6);
 initially previous(t6,t5);
 initially previous(t5,t4);
 initially previous(t4,t3);
-initially previous(t3,t2);
-initially previous(t2,t1);
+initially previous(t3,t2), previous(t2,t1);
 
