@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.antlr.runtime.ANTLRFileStream;
+import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -27,7 +28,7 @@ public class CommandLine {
     protected Domain _domain;
     protected JCommander _optparse;
     
-    @Parameter(description = "<InstAL specification>+")
+    @Parameter(description = "InstAL specification")
     protected List<String> _files = new ArrayList<String>();
     
     @Parameter(names = "--debug", description = "Debug mode")
@@ -69,15 +70,30 @@ public class CommandLine {
 			this._exception("Domain File: IOException: " + e.getMessage());
 		}
 
-        if (this._filesExist(this._files)) {
-            Iterator<String> iter = this._files.iterator();
-            while (iter.hasNext()) {
-                String file = iter.next();
-                this._parseFile(file);
-            }
-        } else {
-            this._exit("Can't read some (or all) of the files specified -- they might not exist");
-        }
+		if (this._files.size() > 0) {
+			// We're file parsing
+			if (this._filesExist(this._files)) {
+	            Iterator<String> iter = this._files.iterator();
+	            while (iter.hasNext()) {
+	                String file = iter.next();
+	                try {
+						this._parseStream(this._fileToStream(file));
+					} catch (IOException e) {
+						this._exit("Unable to stream from " + file);
+					}
+	            }
+	        } else {
+	            this._exit("Can't read some (or all) of the files specified -- they might not exist");
+	        }
+		} else {
+			// We're reading from STDIN
+			this._log("Reading from STDIN..");
+			try {
+				this._parseStream(new ANTLRInputStream(System.in));
+			} catch (IOException e) {
+				this._exit("Unable to read from stdin");
+			}
+		}
     }
 
     protected void _parseArguments(String[] argv) {
@@ -90,7 +106,9 @@ public class CommandLine {
     
     protected void _validateArguments() {
         if (this._files.size() == 0) {
-            this._exit("No InstAL file(s) provided");
+        	this._log("No InstAL files provided, expecting STDIN");
+        } else if (this._files.size() > 1) {
+        	this._exit("More than one InstAL file provided");
         }
 
         if (this._domainFilePath == null || this._domainFilePath.isEmpty()) {
@@ -112,12 +130,14 @@ public class CommandLine {
         return true;
     }
     
-    protected void _parseFile(String file) {
+    protected CharStream _fileToStream(String file) throws IOException {
+        this._log("Parsing file: " + file);
+        CharStream cs = new ANTLRFileStream(file, "UTF8");            
+        return cs;
+    }
+    
+    protected void _parseStream(CharStream cs) {
         try {
-            
-            this._log("Parsing file: " + file);
-            
-            CharStream cs = new ANTLRFileStream(file, "UTF8");
             InstALLexer lex = new InstALLexer(cs);
             CommonTokenStream tokens = new CommonTokenStream(lex);
             InstALParser g = new InstALParser(tokens, null);
