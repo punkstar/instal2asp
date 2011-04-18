@@ -39,6 +39,9 @@ public class CommandLine {
     @Parameter(names = {"-d", "--domain-file"}, description = "Domain file")
     protected String _domainFilePath;
     
+    @Parameter(names = {"-n", "--name"}, description = "Institution name")
+    protected String _instName = null;
+    
     public static void main(String[] argv) {
         CommandLine c = new CommandLine(argv);
         c.start();
@@ -121,6 +124,11 @@ public class CommandLine {
             
             g.instal_specification();
             Institution i = g.i;
+            
+            if (this._instName != null) {
+            	this._log("Overriding institution name with: " + this._instName);
+            	i.setName(this._instName);
+            }
             
     		AnsProlog asp = new AnsProlog(i, this._domain);
     		asp.generate();
