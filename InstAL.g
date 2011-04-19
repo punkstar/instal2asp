@@ -644,7 +644,7 @@ initially_decl
 	
 initially_component
 	:	f=fluents_with_variables		{ _addInitiallyFluents($f.fluents); }
-	|	','? o=obligation_statement ','?	{ log("TODOne: Initially obligations statement: " + $o.text); _addObligation(o.act_name, o.act_args, o.before_name, o.before_args, o.otherwise_name, o.otherwise_args); }
+	|	','? o=obligation_statement ','?	{ _addObligation(o.act_name, o.act_args, o.before_name, o.before_args, o.otherwise_name, o.otherwise_args); }
 	;
 	
 /* OBLIGATIONS */
