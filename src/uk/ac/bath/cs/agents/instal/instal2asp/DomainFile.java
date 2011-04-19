@@ -17,20 +17,6 @@ public class DomainFile {
     protected Pattern _pParts = Pattern.compile("([\\w\\d])+");
     protected File _f;
     
-    public static void main(String[] argv) {
-    	DomainFile d = new DomainFile("/Users/nrj/Desktop/instal2asp/examples/domain.idc");
-
-    	try {
-			d.getDomain();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }
-    
     public DomainFile(String file) {
         this._f = new File(file);
     }
