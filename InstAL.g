@@ -251,17 +251,44 @@ options {
 	}
 	
 	protected void _addObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
-		try {
-			Obligation o = new Obligation();
+		Obligation o = new Obligation();
+		
+		Event eAct = null, eBefore = null, eOtherwise = null;
 			
-			o.act(_getEvent(act), act_vars.toArray(new String[] {}))
-			 .before(_getEvent(before), before_vars.toArray(new String[] {}))
-			 .otherwise(_getEvent(otherwise), otherwise_vars.toArray(new String[] {}));
-			 
-			i.obl(o);
+		try {	
+			eAct = _getEvent(act);
+			eBefore = _getEvent(before);
+			eOtherwise = _getEvent(otherwise);
 		} catch (Exception e) {
-			emitErrorMessage("There was an error with an obligation rule: " + e.getMessage());
+			emitErrorMessage("There was a problem finding the event objects!: " + e.getMessage());
+			return;
 		}
+		
+		String[] vAct, vBefore, vOtherwise;
+		
+		if (act_vars == null) {
+			vAct = new String[] {};		
+		} else {
+			vAct = act_vars.toArray(new String[] {});
+		}
+		
+		if (before_vars == null) {
+			vBefore = new String[] {};
+		} else {
+			vBefore = before_vars.toArray(new String[] {});
+		}
+		
+		if (otherwise_vars == null) {
+			vOtherwise = new String[] {};
+		} else {
+			vOtherwise = otherwise_vars.toArray(new String[] {});
+		}
+		
+		o.act(eAct, vAct)
+		 .before(eBefore, vBefore)
+	  	 .otherwise(eOtherwise, vOtherwise);
+			 
+		i.obl(o);
 	}
 	
 	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) throws Exception {
@@ -617,7 +644,7 @@ initially_decl
 	
 initially_component
 	:	f=fluents_with_variables		{ _addInitiallyFluents($f.fluents); }
-	|	','? o=obligation_statement ','?	{ log("TODO: Initially obligations statement: " + $o.text); }
+	|	','? o=obligation_statement ','?	{ log("TODOne: Initially obligations statement: " + $o.text); _addObligation(o.act_name, o.act_args, o.before_name, o.before_args, o.otherwise_name, o.otherwise_args); }
 	;
 	
 /* OBLIGATIONS */
