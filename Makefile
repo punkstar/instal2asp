@@ -25,4 +25,7 @@ jar:
 	mkdir -p build
 	cd classes &&  jar -cf ../build/instal-parser.jar uk/ac/bath/cs/agents/instal/parser/*.class
 
-.PHONY: all instal2asp parser instal clean test
+run:
+	./instal2asp -d examples/wgrid-obligation-driven/domain.txt examples/wgrid-obligation-driven/new.ial | clingo examples/wgrid-obligation-driven/basic.lp examples/wgrid-obligation-driven/alltrace.lp -
+
+.PHONY: all instal2asp parser instal clean test run
