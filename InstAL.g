@@ -415,7 +415,7 @@ options {
 				FluentCondition f = iter.next();
 				
 				try {
-					if (_getInertialFluent(f.getFluent()) == null) {
+					if (!f.isModified() && _getInertialFluent(f.getFluent()) == null) {
 						return false;
 					}
 				} catch (Exception e) {
@@ -457,6 +457,10 @@ options {
 			} else {
 				return this.name;
 			}
+		}
+		
+		public String getName() {
+			return this.name;
 		}
 		
 		public boolean isModified() {
