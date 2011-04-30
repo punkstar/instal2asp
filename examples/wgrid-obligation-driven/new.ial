@@ -39,16 +39,16 @@ fluent busyHReceiving(Handset); % indicates that the handset is receiving from a
 fluent busyBReceiving(Handset); % indicates that the handset is receiving from the base
 fluent busyChannel(Channel); % indicates that the channel is busy
 
-%------------------------------------------------------------------------
+%------------------------------
 % noninertial rules
-%------------------------------------------------------------------------
+%------------------------------
 %always busyHSending(Handset) when asend(Handset,Time);
 %always busyHReceiving(Handset) when areceive(Handset,Time);
 %always busyBReceiving(Handset) when creceive(Handset,Time);
 
-%------------------------------------------------------------------------
+%------------------------------
 % transition rules
-%------------------------------------------------------------------------
+%------------------------------
 
 download(A,X,C) generates transition;
 send(A,X) generates transition;
@@ -72,9 +72,9 @@ transition terminates asend(A,Time);
 transition terminates areceive(A,Time);
 transition generates intDeadline if countdown(t1);
 
-%------------------------------------------------------------------------
+%------------------------------
 % rules for downloading
-%------------------------------------------------------------------------
+%------------------------------
 
 % agent requests a block from the base station on channel C
 download(A,X,C) generates intDownload(A,X,C) if not hasChunk(A,X), not busyChannel(C), not busyBReceiving(A), not busyHSending(A), not busyHReceiving(A);
@@ -87,9 +87,9 @@ intDownload(A,X,C) terminates pow(intDownload(B,X1,C));
 intDownload(A,X,C) terminates downloadChunk(A,X);
 intDownload(A,X,C) terminates perm(intDownload(A,X,C1));
 
-%------------------------------------------------------------------------
+%------------------------------
 % rules for sharing
-%------------------------------------------------------------------------
+%------------------------------
 
 send(A,X) generates intSend(A,X) if hasChunk(A,X), not busyHSending(A), not busyHReceiving(A), not busyBReceiving(A);
 
@@ -108,9 +108,9 @@ intSend(A,X) terminates pow(intSend(A,X1));
  
 misuse(A) terminates pow(intReceive(A,X));
 
-%------------------------------------------------------------------------
+%------------------------------
 % downloading
-%------------------------------------------------------------------------
+%------------------------------
 
 initially pow(transition), perm(transition),
           perm(clock),
@@ -120,9 +120,9 @@ initially pow(transition), perm(transition),
           downloadChunk(alice,x1), downloadChunk(alice,x3),
 	  downloadChunk(bob,x2), downloadChunk(bob,x4);
 
-%------------------------------------------------------------------------
+%------------------------------
 % sharing
-%------------------------------------------------------------------------
+%------------------------------
 
 initially pow(transition), perm(transition),
           perm(clock),
@@ -133,17 +133,17 @@ initially pow(transition), perm(transition),
 	  obl(send(bob,x2), intDeadline, misuse(bob)), obl(send(bob,x4), intDeadline, misuse(bob));
 
 
-%------------------------------------------------------------------------
+%------------------------------
 % initially
-%------------------------------------------------------------------------
+%------------------------------
 
 initially countdown(t20);
 initially pow(intDeadline);
 initially perm(intDeadline);
 
-%------------------------------------------------------------------------
+%------------------------------
 % time
-%------------------------------------------------------------------------
+%------------------------------
 
 initially previous(t30,t29);
 initially previous(t29,t28);
