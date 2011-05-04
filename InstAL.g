@@ -130,6 +130,52 @@ options {
 		}
 	}
 	
+	protected void _addComplexEvent(String type, String name, Hashtable<String, String> types_with_names, ArrayList<Constraint> constraints) {
+		log("Adding complex event: " + name + ", " + type);
+		try {
+			Event e;
+			
+			if (type.equals("exogenous")) {
+				e = new ExogenousEvent(name);
+			} else if (type.equals("inst")) {
+				e = new NormativeEvent(name);
+			} else if (type.equals("creation") || type.equals("create")) {
+				e = new CreationEvent(name);
+			} else if (type.equals("violation")) {
+				e = new ViolationEvent(name);
+			} else {
+				emitErrorMessage("Unrecognised event type '" + type + "'");
+				return;
+			}
+			
+			if (types_with_names != null) {
+				Iterator<String> iter = types_with_names.keySet().iterator();
+				while (iter.hasNext()) {
+					String key = iter.next();
+					Type t = _getType(types_with_names.get(key));
+			
+					e.addParameter(t, key);
+				}
+			}
+			
+			if (constraints != null) {
+				Iterator<Constraint> iter_c = constraints.iterator();
+				while (iter_c.hasNext()) {
+					Constraint c = iter_c.next();
+					e.constraint(c.x, c.op, c.y);
+				}
+			}
+			
+			log("Adding event to inst");
+			i.event(e);
+			log("Done");
+			_eventMap.put(name, e);
+			
+		} catch (Exception e) {
+			emitErrorMessage("There was an error with an event definition: " + e.getMessage());
+		}
+	}
+	
 	protected void _addFluent(String type, String name, ArrayList<String> args) {
 		try {
 			if (_inertialFluentMap.containsKey(name)) {
@@ -483,6 +529,18 @@ options {
 		}
 	}
 	
+	private class Constraint {
+		public String x;
+		public String y;
+		public String op;
+		
+		public Constraint(String x, String op, String y) {
+			this.x = x;
+			this.y = y;
+			this.op = op;
+		}
+	}
+	
 	@Override
   	public void reportError(RecognitionException e) {
   		try {
@@ -554,7 +612,7 @@ type_name returns [String result]
 /* EVENT DECL */
 event_decl
 	:	
-	(	extended_event_decl 	{ log("TODO: extended_event_decl"); }
+	(	extended_event_decl 	{ _addComplexEvent($extended_event_decl.type, $extended_event_decl.name, $extended_event_decl.types_with_names, $extended_event_decl.constraints); }
 	| 	standard_event_decl	{ _addEvent($standard_event_decl.type, $standard_event_decl.name, $standard_event_decl.types); }
 	)  	END
 	;
@@ -563,8 +621,8 @@ standard_event_decl returns [String type, String name, ArrayList<String> types]
 	:	event_description type_arguments? { $type = $event_description.type; $name = $event_description.name; $types = $type_arguments.args; }
 	;
 	
-extended_event_decl returns [String type, String name]
-	:	event_description variable_type_arguments KEY_WITH variable_constraints { $type = $event_description.type; $name = $event_description.name; }
+extended_event_decl returns [String type, String name, Hashtable<String, String> types_with_names, ArrayList<Constraint> constraints]
+	:	event_description variable_type_arguments KEY_WITH variable_constraints { $type = $event_description.type; $name = $event_description.name; $types_with_names = $variable_type_arguments.typemap; $constraints = $variable_constraints.constraints; }
 	;
 	
 event_description returns [String type, String name]
@@ -577,11 +635,15 @@ event_name
 event_type
 	:	( 'exogenous' | 'inst' | EVENT_KEY_CREATE | 'violation' );
 	
-variable_constraints
-	:	variable_constraint ( ',' variable_constraint )*;
+variable_constraints returns [ArrayList<Constraint> constraints]
+	scope { ArrayList<Constraint> list; }
+	@init { $variable_constraints::list = new ArrayList<Constraint>(); }
+	:	variable_constraint ( ',' variable_constraint )*	{ $constraints = $variable_constraints::list; }
+	;
 	
 variable_constraint
-	:	variable_name operation variable_name;
+	:	x=variable_name op=operation y=variable_name { $variable_constraints::list.add(new Constraint($x.text, $op.text, $y.text)); }
+	;
 
 /* FLUENT DECL */
 fluent_decl
@@ -700,10 +762,10 @@ type_argument
 	:	type_name	{ $type_arguments::list.add($type_name.text); }
 	;
 	
-variable_type_arguments returns [ArrayList<String> args]
+variable_type_arguments returns [Hashtable<String, String> typemap]
 	scope { ArrayList<String> list; Hashtable<String, String> map; }
 	@init { $variable_type_arguments::list = new ArrayList<String>(); $variable_type_arguments::map = new Hashtable<String, String>(); }
-	:	LPAR variable_type_argument ( ',' variable_type_argument )* RPAR
+	:	LPAR variable_type_argument ( ',' variable_type_argument )* RPAR	{ $typemap = $variable_type_arguments::map; }
 	;
 	
 variable_type_argument
