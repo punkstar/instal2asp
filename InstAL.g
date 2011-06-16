@@ -648,8 +648,8 @@ variable_constraint
 /* FLUENT DECL */
 fluent_decl
 	:	(
-			noninertial_fluent_decl	{ _addFluent($noninertial_fluent_decl.type, $noninertial_fluent_decl.name,  $noninertial_fluent_decl.args); }
-		|	standard_fluent_decl	{ _addFluent($standard_fluent_decl.type,    $standard_fluent_decl.name,     $standard_fluent_decl.args  ); }
+			nf=noninertial_fluent_decl	{ _addFluent($nf.type, $nf.name, $nf.args); }
+		|	sf=standard_fluent_decl	        { _addFluent($sf.type, $sf.name, $sf.args); }
 		) END 	
 	;
 	
@@ -749,6 +749,11 @@ obligation_statement returns [String act_name, ArrayList<String> act_args, Strin
 			$otherwise_name = $otherwise.name;
 			$otherwise_args = $otherwise.args;
 		}
+	;
+	
+noninertial_rule
+	:
+	
 	;
 	
 /* UTILITY */
