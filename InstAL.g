@@ -35,6 +35,9 @@ options {
 	protected Hashtable<String, Fluent> _inertialFluentMap = new Hashtable<String, Fluent>();
 	protected Hashtable<String, uk.ac.bath.cs.agents.instal.Event> _eventMap = new Hashtable<String, uk.ac.bath.cs.agents.instal.Event>();
 
+	// We temp store obligations in here so that we have a reference we can pass to reference them.
+	protected ArrayList<Obligation> _tempObligationStore = new ArrayList<Obligation>();
+
 	private static void log(String message) {
 		System.err.println("[antlr]: " + message);
 	}
@@ -297,6 +300,19 @@ options {
 	}
 	
 	protected void _addObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
+		Obligation o = this._createObligation(act, act_vars, before, before_vars, otherwise, otherwise_vars);
+		i.obl(o);
+	}
+	
+	protected int _storeObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
+		Obligation o = this._createObligation(act, act_vars, before, before_vars, otherwise, otherwise_vars);
+		synchronized (this._tempObligationStore) {
+			this._tempObligationStore.add(o);
+			return this._tempObligationStore.size() - 1;
+		}
+	}
+	
+	protected Obligation _createObligation(String act, ArrayList<String> act_vars, String before, ArrayList<String> before_vars, String otherwise, ArrayList<String> otherwise_vars) {
 		Obligation o = new Obligation();
 		
 		Event eAct = null, eBefore = null, eOtherwise = null;
@@ -307,7 +323,7 @@ options {
 			eOtherwise = _getEvent(otherwise);
 		} catch (Exception e) {
 			emitErrorMessage("There was a problem finding the event objects!: " + e.getMessage());
-			return;
+			return o;
 		}
 		
 		String[] vAct, vBefore, vOtherwise;
@@ -333,8 +349,8 @@ options {
 		o.act(eAct, vAct)
 		 .before(eBefore, vBefore)
 	  	 .otherwise(eOtherwise, vOtherwise);
-			 
-		i.obl(o);
+	  	 
+	  	return o;
 	}
 	
 	protected Rule _addRuleConditions(Rule r, ArrayList<FluentCondition> condition_fluents) throws Exception {
@@ -400,7 +416,14 @@ options {
 			Iterator<FluentCondition> iter = fluents.iterator();
 			while (iter.hasNext()) {
 				FluentCondition f = iter.next();
-				_addInitiallyFluent(f);
+				
+				if (f.modifier.equals("obligation")) {
+					_addInitiallyFluent(f);
+				} else {
+					i.initially(
+						this._tempObligationStore.get(0/*Integer.parserInt(f.getName())*/).initially()
+					);
+				}
 			}
 		} catch (Exception e) {
 			emitErrorMessage("There was an error with an initially statement: " + e.getMessage());
@@ -580,7 +603,7 @@ instal_specification
 		institution_decl 			{ _setInsitutionName($institution_decl.name); }
 		( constituent_decl | LINE_COMMENT )*
 		( initially_decl   | LINE_COMMENT )*
-		EOF
+		EOF					{ System.out.println(this.i.toString()); }
 	;
 		
 institution_decl returns [String name]
@@ -711,6 +734,7 @@ fluent_varient returns [String type, String name, ArrayList<String> args, String
 	:	( KEY_POW LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "pow";  }
 	| 	( KEY_PERM LPAR fluent_name variable_arguments? RPAR )		{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "perm"; }
 	|	( fluent_name variable_arguments? )				{ $name = $fluent_name.text; $args = $variable_arguments.args; $modifier = "";     }
+	|	( o=obligation_statement ) 					{ $name = _createObligation(o.act_name, o.act_args, o.before_name, o.before_args, o.otherwise_name, o.otherwise_args).toString(); $args = null; $modifier = "obligation"; }
 	;
 
 /* CONSEQUENCE RULES */
@@ -752,8 +776,10 @@ obligation_statement returns [String act_name, ArrayList<String> act_args, Strin
 	;
 	
 noninertial_rule
-	:
-	
+	:	KEY_ALWAYS
+		result=fluent_with_variables
+		KEY_WHEN
+		condition=fluent_with_variables
 	;
 	
 /* UTILITY */
@@ -814,6 +840,8 @@ KEY_OBLIGATION	:	'obl';
 KEY_PERM	:	'perm';
 KEY_POW		:	'pow';
 KEY_NONINERTIAL :	'noninertial';
+KEY_ALWAYS	:	'always';
+KEY_WHEN	:	'when';
 
 EVENT_KEY_CREATE
 	:	('create'|'creation')
