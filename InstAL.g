@@ -597,6 +597,7 @@ constituent_decl
 	|	obligation_decl	
 	| 	generates_rule
 	| 	consequence_rule
+	|	noninertial_rule
 	;
 
 /* TYPE DECL */
@@ -752,8 +753,11 @@ obligation_statement returns [String act_name, ArrayList<String> act_args, Strin
 	;
 	
 noninertial_rule
-	:
-	
+	:	KEY_ALWAYS
+		results=fluents_with_variables
+		KEY_WHEN
+		conditions=fluents_with_variables_with_negation
+		END
 	;
 	
 /* UTILITY */
@@ -814,6 +818,8 @@ KEY_OBLIGATION	:	'obl';
 KEY_PERM	:	'perm';
 KEY_POW		:	'pow';
 KEY_NONINERTIAL :	'noninertial';
+KEY_ALWAYS	:	'always';
+KEY_WHEN	:	'when';
 
 EVENT_KEY_CREATE
 	:	('create'|'creation')
