@@ -3,3 +3,4 @@ output
 *.swp
 .classpath
 .project
+src/uk/ac/bath/cs/agents/instal/parser/*
