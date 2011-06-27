@@ -1,0 +1,7 @@
+institution test;
+
+type Carrier;
+type Time;
+
+exogenous event exo_noparams;
+exogenous event exo_params(Time, Time);
