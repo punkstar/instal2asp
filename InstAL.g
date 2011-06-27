@@ -440,6 +440,15 @@ options {
 		}
 	}
 	
+	protected NoninertialFluent _getNoninertialFluent(String name) throws Exception {
+		if(_noninertialFluentMap.containsKey(name)) {
+			return _noninertialFluentMap.get(name);
+		} else {
+			emitErrorMessage("Nonintertial Fluent '" + name + "' is undefined");
+			throw new Exception("Nonintertial Fluent '" + name + "' is undefined");
+		}
+	}
+	
 	protected Fluent _addInertialFluent(FluentCondition fc) throws Exception {
 	    if (!_inertialFluentMap.containsKey(fc.getFluent())) {
 	        if (fc.isModified()) {
@@ -757,7 +766,47 @@ noninertial_rule
 		results=fluents_with_variables
 		KEY_WHEN
 		conditions=fluents_with_variables_with_negation
-		END
+		END {
+			System.err.println("Always When Found");
+			FluentCondition[] always = $results.fluents.toArray(new FluentCondition[] {});
+			FluentCondition[] when = $conditions.fluents.toArray(new FluentCondition[] {});
+			
+			for (FluentCondition fluent : always) {
+				AlwaysWhen aw;
+				
+				try {
+					String[] args = fluent.args;
+					NoninertialFluent nf = _getNoninertialFluent(fluent.name);
+					
+					aw = new AlwaysWhen(nf, args);
+				} catch (Exception e) {
+					System.err.println("Error finding nonintertial rule antecedent: " + e.getMessage());
+					continue;
+				}
+				
+				for (FluentCondition condition : when) {
+					Fluent f;
+					try {
+						f = _getNoninertialFluent(condition.name);
+					} catch (Exception e) {
+						f = null;
+					}
+
+					if (f == null) {
+						try {
+							f = _getInertialFluent(condition.name);
+						} catch (Exception e) {
+							System.err.println("Error finding nonintertial rule conditions: " + e.getMessage());
+							break;
+						}
+					}
+					
+					aw.condition(condition.sign, f, condition.args);
+				}
+				
+				i.alwayswhen(aw);
+			}
+		}
 	;
 	
 /* UTILITY */
