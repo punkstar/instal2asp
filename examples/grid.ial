@@ -102,6 +102,8 @@ misuse(A) terminates pow(intReceive(A,X));
 
 intReceive(A,X) terminates perm(intReceive(A,Y)); 
 
+always busyHSending(H) when busyHSending(N);
+
 transition terminates asend(A,T); 
 transition terminates areceive(A,T);
 
