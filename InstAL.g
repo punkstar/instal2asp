@@ -453,7 +453,7 @@ options {
 	    if (!_inertialFluentMap.containsKey(fc.getFluent())) {
 	        if (fc.isModified()) {
 	            if (fc.modifier.equals("perm")) {
-        	        _inertialFluentMap.put(fc.getFluent(), _getEvent(fc.name).pow());	            
+        	        _inertialFluentMap.put(fc.getFluent(), _getEvent(fc.name).perm());	            
 	            } else if (fc.modifier.equals("pow")) {
         	        _inertialFluentMap.put(fc.getFluent(), _getEvent(fc.name).pow());
 	            }
